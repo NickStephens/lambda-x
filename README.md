@@ -1,7 +1,7 @@
 Lambda-X 
 ========
 
-An attempt to build universal Lambda Calculus function in the Lambda Calculus
+An attempt to build a universal Lambda Calculus function in the Lambda Calculus.
 
 Three Components:
 * Lambda Calculus Parser <- Written in Haskell
