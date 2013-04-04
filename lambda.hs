@@ -1,7 +1,12 @@
 module Lambda where
 
+-- This is similar to a Lambda bootstrap. The implementation has to
+-- be based on something, which happens to be Haskell.
 
---
+-- This module contains Lambda Calculus abstract data types and 
+-- functions used for evaluating the Lambda Calculus
+
+
 -- File to support lambda terms
 -- closely based on Sergio Antoy's verion
 
