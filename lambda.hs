@@ -1,9 +1,11 @@
+module Lambda where
+
+
+--
 -- File to support lambda terms
 -- closely based on Sergio Antoy's verion
 
---module lambda where
-
-type Var = String
+type Variable = String
 
 data Constant = Plus
               | Minus
@@ -15,23 +17,23 @@ data Constant = Plus
      deriving (Show, Eq)
 
 
-data Exp = Abs Var Exp   -- \x -> (\y -> exp) == Abs (Var "x") (Abs (Var "y") exp)
+data Exp = Lam Variable Exp
          | App Exp Exp
-         | Var Var
+         | Var Variable
          | Cons Constant
-  deriving (Eq)
+  deriving Eq
 
 instance Show Exp where
-	show (Abs v e) = "\\" ++ v ++ ". " ++ show e
-	show (App e1 e2) = "(" ++ show e1 ++ " " ++ show e2 ++ ")"
-	show (Var var) = var
-	show (Cons cons) = show cons
+	show (Lam var exp)   = "\\" ++ var ++ " -> " ++ show exp
+	show (App exp1 exp2) = "("++show exp1 ++ " " ++ show exp2++")"
+	show (Var var)       = var
+	show (Cons cons)     = show cons
 
 -- fv(exp) returns the free vars
 
-fv :: Exp -> [Var]
+fv :: Exp -> [Variable]
 
-fv (Abs v e) = setdiff (fv e) [v]
+fv (Lam v e) = setdiff (fv e) [v]
 fv (App e1 e2) = un (fv e1) (fv e2)
 fv (Var v) = [v]
 
@@ -53,171 +55,182 @@ sub m (Var x) (Var v)
    | x /= v                = (Var v)
 sub m (Var x) (App e1 e2)        = (App (sub m (Var x) e1) (sub m (Var x) e2))
                                    -- app rule
-sub m (Var x) (Abs v e)
-   | x == v                = (Abs v e)        -- abs rule, x is the bound var
+sub m (Var x) (Lam v e)
+   | x == v                = (Lam v e)        -- abs rule, x is the bound var
    | notElem x (fv e)
-     || notElem v (fv m)   = (Abs v (sub m (Var x) e))
+     || notElem v (fv m)   = (Lam v (sub m (Var x) e))
                                               -- abs , x not free in e OR
                                               -- y not free in m
-   | otherwise             = (Abs z (sub m (Var x) (sub (Var z) (Var v) e)) )
+   | otherwise             = (Lam z (sub m (Var x) (sub (Var z) (Var v) e)) )
        where
          z = fresh (un (fv m) (fv e))
 
 
 -- Beta reduction
--- I think this equivalent to one step in (leftmost?) outermost reduction
 
 reduce (Cons c) = (Cons c)
 reduce (Var x) = (Var x)
 -- if the leftmost term of an application is a lambda abstraction,
 -- reduce it using the sub rule
-reduce (App (Abs v e) e2) = sub e2 (Var v) e
+reduce (App (Lam v e) e2) = sub e2 (Var v) e
 -- if the leftmost term of an application is not a lambda abstraction,
 -- try reducing it
 reduce (App e1 e2) = App (reduce e1) (reduce e2)
 -- if the leftmost term is an abstraction, reduce the body
-reduce (Abs v e) = Abs v (reduce e)
+reduce (Lam v e) = Lam v (reduce e)
 
-b_reduce :: Exp -> Maybe Exp
-b_reduce (App (Abs v e) t) = return $ sub t (Var v) e
-b_reduce _ = Nothing
 
-outer (Var x) = Nothing
-outer (Cons x) = Nothing
-outer (Abs v e) = case (outer e) of
-			Nothing -> Nothing
-			Just e' -> return $ Abs v e'
-outer t@(App e1 e2) = case (b_reduce t) of
-			Nothing -> case (outer e1) of
-					Nothing -> case (outer e2) of
-							Nothing -> Nothing
-							Just e2' -> return $ App e1 e2' 
-					Just e1' -> return $ App e1' e2
-			Just t' -> return t'
+reDuce exp
+	|exp' == exp = exp
+	|otherwise   = reDuce exp'
+		where exp' = reduce exp
 
-inner (Var x) = Nothing
-inner (Cons x) = Nothing 
-inner (Abs v e) = case (inner e) of
-			Nothing -> Nothing
-			Just e' -> return $ Abs v e'
-inner t@(App e1 e2) = case (inner e1) of
-			Nothing -> case (inner e2) of
-					Nothing -> case (b_reduce t) of
-							Nothing -> Nothing
-							Just t' -> return t'
-					Just e2' -> return $ App e1 e2'
-			Just e1' -> return $ App e1' e2
+--http://www.itu.dk/people/sestoft/papers/sestoft-lamreduce.pdf
 
-eval strat t = case (strat t) of
-		Nothing -> return t
-		Just t' -> eval strat t'
+-- ghci> nor (App (App y g) four
+-- \f -> \x -> (f (f (f (f (f (f (f (f (f (f x))))))))))
 
-{- An earlier attempt at the reduction strategies
-leftOuter :: Exp -> Exp
-leftOuter (Cons c) = (Cons c)
-leftOuter (Var v) = (Var v)
-leftOuter (App (Var v) e2) = (App (Var v) (leftOuter e2)) -- If the leftmost thing has already been reduced
---leftOuter (App (Abs v e) (App a1 a2)) = (App (Abs v e) (leftOuter (App a1 a2))) -- reduce the application we're applying the abstraction to.  (Maybe I should just reduce it?
 
-leftOuter (App (Abs v e) e2) = reduce (App (Abs v e) e2)
-leftOuter (App e1 e2) = (App (leftOuter e1) e2)
-leftOuter (Abs v e) = (Abs v (leftOuter e))
+nor (Var x) = Var x
+nor (Lam x e) = Lam x (nor e)
+nor (App e1 e2) = case cbn e1 of
+	Lam x e -> nor (sub e2 (Var x) e)
+	e1'     -> let e1'' = nor e1' in App e1'' (nor e2)
 
-cbn (App (Abs v e) e2) = cbn $ leftOuter (App (Abs v e) e2)
-cbn (App (Var v1) (Var v2)) = (App (Var v1) (Var v2))
-cbn (App (Var v) e2) = (App (Var v) (cbn e2)) -- If it's not an abstractions app
-cbn (App e1 e2) = cbn $ leftOuter (App e1 e2)
-cbn (Abs v e) = (Abs v (cbn e))
-cbn a = a
--}
 
-{-
-leftInner :: Exp -> Exp
-leftInner (App (App e1 e2) e3) = App (leftInner (App e1 e2)) e3
-leftInner (App e1 (App e2 e3)) = App e1 (leftInner (App e2 e3))
-leftInner t = reduce t
 
-cbv (App (Abs v e) e2) = cbv $ leftInner (App (Abs v e) e2)
-cbv (App (Var v1) (Var v2)) = (App (Var v1) (Var v2))
-cbv (App (Var v) e2) = (App (Var v) (cbv e2)) 
-cbv (App e1 e2) = cbv $ leftInner (App e1 e2)
-cbv (Abs v e) = (Abs v (cbv e))
-cbv a = a
--}
+cbn (Var x) = Var x
+cbn (Lam x e) = Lam x e
+cbn (App e1 e2) = case cbn e1 of
+	Lam x e -> cbn (sub e2 (Var x) e)
+	e1'     -> App e1' e2
 
--- Test cases: 
-{-
-*Main> cbn (App throw (App self_app self_app))
-Var "z"
-*Main> cbv (App throw (App self_app self_app))
+------------------------------------------------
+-- ghci> app (App (App y g) four
+-- <does not terminate...>
 
-^CInterrupted.
-*Main>
--}
+app (Var x) = Var x
+app (Lam x e) = Lam x (app e)
+app (App e1 e2) = case app e1 of
+	Lam x e -> let e2' = app e2 in app (sub e2' (Var x) e)
+	e1'     -> let e2' = app e2 in App e1' e2'
 
--- The Y Combinator
-y = Abs "h" (App (Abs "x" (App (Var "h") (App (Var "x") (Var "x")))) (Abs "x" (App (Var "h") (App (Var "x") (Var "x")))))
 
-fac = (Abs "f" (Abs "n" (App (App (App if_ (App iszero (Var "n"))) one) (App (App mul (Var "n")) (App (Var "f") (App pre (Var "n")))))))
+cbv (Var x) = Var x
+cbv (Lam x e) = Lam x e
+cbv (App e1 e2) = case cbv e1 of
+	Lam x e -> let e2' = cbv e2 in cbv (sub e2' (Var x) e)
+	e1'     -> let e2' = cbv e2 in App e1' e2'
 
--- Church numerals: the number of apps of f corresponds to the
--- numeral
 
-zero = Abs "f" (Abs "x" (Var "x"))
-one = Abs "f" (Abs "x" (App (Var "f") (Var "x")))
-two = Abs "f" (Abs "x" (App (Var "f") (App (Var "f") (Var "x"))))
-three = Abs "f" (Abs "x" (App (Var "f") (App (Var "f") (App (Var "f") (Var "x")))))
-four = Abs "f" (Abs "x" (App (Var "f") (App (Var "f") (App (Var "f") (App (Var "f") (Var "x"))))))
 
-add = Abs "n" (Abs "m" (Abs "f" (Abs "x" (App (App (Var "n") (Var "f"))
+
+pair = Lam "a" (Lam "b" (Lam "f" (App (App (Var "f") (Var "a")) (Var "b"))))
+
+first = Lam "p" (App (Var "p") true) --(Lam "a" (Lam "b" (Var "a"))))
+second = Lam "p" (App (Var "p") false) --(Lam "a" (Lam "b" (Var "b"))))
+
+empty = false
+
+cons = Lam "h" (Lam "t" (Lam "c" (Lam "n"  (App (App (Var "c")(Var "h"))  (App (App (Var "t")(Var "c"))(Var "n"))))))
+
+hed = Lam "l" (App (App (Var "l") true) false)
+
+tale = Lam "l" (App first (App (App (Var "l") (Lam "a" (Lam "b" (App (App pair (App second (Var "b")))
+			(App (App cons (Var "a"))(App second (Var "b"))))))) (App (App pair empty) empty)))
+
+isEmpty = Lam "l" (App (App (Var "l") (Lam "a" (Lam "b" false))) true)
+
+a =nor (App (App cons (Var "A")) empty)
+
+b =nor (App (App cons (Var "B")) a)
+
+c=nor (App (App cons (Var "C")) b) 
+
+p = nor (App (App pair (Var "X"))(Var "Y"))
+
+c' = nor (App (App cons (Var "A")) (App (App cons (Var "B")) (App (App cons (Var "C")) empty)))
+
+zipped = nor (App (App (App y zip') c) c')
+
+zip' = Lam "f"
+	( Lam "l1" (Lam "l2" (App (App (App iF (App (App oR (App isEmpty (Var "l1"))) (App isEmpty (Var "l2"))))
+	empty)
+	(App (App cons
+	(App (App pair (App hed (Var "l1"))) (App hed (Var "l2"))))
+	(App (App (Var "f") (App tale (Var "l1"))) (App tale (Var "l2"))))
+	)) )
+
+ziip = Lam "a" (Lam "b" (App (App (App y zip') (Var "a")) (Var "b")))
+
+
+
+-- sum of n
+g = Lam "f" (Lam "n" (App (App (App iF (App isZero (Var "n"))) zero) (App (App add (Var "n"))
+				(App (Var "f") (App (App subZ (Var "n")) one)))))
+
+-- the Y combinator (!) 
+y = Lam "f" (App (Lam "x" (App (Var "f") (App (Var "x") (Var "x"))))
+				(Lam "x" (App (Var "f") (App (Var "x") (Var "x")))))
+
+redex = App (App (Lam "x" (Lam "y" (App (App add (Var "x")) (Var "y"))))
+	(App (Lam "z" (App suc (Var "z"))) four))
+		(App (Lam "w" (App suc (Var "w"))) three) 
+
+reex = App (App (Lam "x" (Lam "y" (App (App add (Var "x")) (Var "y"))))
+	(App (Lam "z" (App (Var "z")(Var "z"))) (Var "one")))
+		(App (Lam "w" (App (Var "w")(Var "w"))) (Var "two"))
+
+
+bam = Lam "x" (App (Var "x") (Var "x")) 
+
+zero = Lam "f" (Lam "x" (Var "x"))
+one = Lam "f" (Lam "x" (App (Var "f") (Var "x")))
+two = Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (Var "x"))))
+three = Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (App (Var "f") (Var "x")))))
+four = App suc three
+
+add = Lam "n" (Lam "m" (Lam "f" (Lam "x" (App (App (Var "n") (Var "f"))
                 (App (App (Var "m") (Var "f"))
                      (Var "x"))))))
 
--- iszero: returns true if the n is zero
-iszero  = Abs "n" (App (App (Var "n") (Abs "x" false)) true)
 
--- minus: subtract n from m (note: if m < n then 0)
-minus = Abs "m" (Abs "n" (App (App (Var "n") pre) (Var "m")))
+pow = Lam "n" (Lam "m" (Lam "f" (Lam "x"  (App (App (App (Var "m") (Var "n")) (Var "f")) (Var "x")))))
 
--- predecessor: subtracts one
-pre = Abs "n" (Abs "f" (Abs "x" (App (App (App (Var "n") (Abs "g" (Abs "h" (App (Var "h") (App (Var "g") (Var "f")))))) (Abs "u" (Var "x")) ) (Abs "u" (Var "u")))))
+mul = Lam "f1" (Lam "f2" (Lam "f" (App (Var "f1") (App (Var "f2") (Var "f")))))
 
-true = Abs "x" (Abs "y" (Var "x"))
-false = Abs "x" (Abs "y" (Var "y"))
+pre = Lam "n" (Lam "f" (Lam "x" (App (App (App (Var "n") (Lam "g" (Lam "h" (App (Var "h") (App (Var "g") (Var "f")))))) (Lam "u" (Var "x")) ) (Lam "u" (Var "u")))))
 
--- if: simulates and if then else
-if_ = Abs "f" (Abs "x" (Abs "y" (App (App (Var "f") (Var "x")) (Var "y"))))
 
--- multiplication: an implementation of mul using the Y combinator
-mul_rec = Abs "f" (Abs "n" (Abs "m" (App (App (App if_ (App iszero (Var "m"))) zero) (App (App add (Var "n")) (App (App (Var "f") (Var "n")) (App (App minus (Var "m")) one))))))
+subtrax = Lam "m" (Lam "n" (App (App (Var "n") pre) (Var "m")))
 
--- multiplication: a non-recursive mul
-mul = Abs "m" (Abs "n" (Abs "x" (App (Var "m") (App (Var "n") (Var "x")))))
+isZero  = Lam "n" (App (App (Var "n") (Lam "x" false)) true)
+isZero' = Lam "x" (App (App (App (Var "x") false) noT) false)
 
--- \n -> \m -> \f -> \x -> (n f) (m f) x
+gE = Lam "x" (Lam "y" (App isZero' (App (App (Var "x") pre) (Var "y"))))
 
--- Main> reduce (App (App add one) one)
--- App (Abs "m" (Abs "f" (Abs "x" (App (App (Abs "f" (Abs "x" (App (Var "f") (Var "x")))) (Var "f")) (App (App (Var "m") (Var "f")) (Var "x")))))) (Abs "f" (Abs "x" (App (Var "f") (Var "x"))))
--- Main> reduce (reduce (App (App add one) one))
--- Abs "f" (Abs "x" (App (App (Abs "f" (Abs "x" (App (Var "f") (Var "x")))) (Var "f")) (App (App (Abs "f" (Abs "x" (App (Var "f") (Var "x")))) (Var "f")) (Var "x"))))
--- Main> reduce (reduce (reduce (App (App add one) one)))
--- Abs "f" (Abs "x" (App (Abs "f'" (App (Var "f") (Var "f'"))) (App (Abs "f'" (App(Var "f") (Var "f'"))) (Var "x"))))
--- Main> reduce (reduce (reduce (reduce (App (App add one) one))))
--- Abs "f" (Abs "x" (App (Var "f") (App (Abs "f'" (App (Var "f") (Var "f'"))) (Var"x"))))
--- Main> reduce (reduce (reduce (reduce (reduce (App (App add one) one)))))
--- Abs "f" (Abs "x" (App (Var "f") (App (Var "f") (Var "x"))))
--- Main>
+eQ = Lam "x" (Lam "y" (App (App anD (App isZero' (App (App (Var "x") pre) (Var "y")))) (App isZero' (App (App (Var "y") pre) (Var "x")))))
 
--- reduce (add one one). This takes 5 reductions
--- Main> reduce (reduce (reduce (reduce (reduce (App (App add one) one)))))
--- Abs "f" (Abs "x" (App (Var "f") (App (Var "f") (Var "x"))))
--- Main>
+eq = Lam "m" (Lam "n" (App (App anD (App (App ltE (Var "m")) (Var "n"))) (App (App ltE (Var "n")) (Var "m"))))
 
+ltE = Lam "m" (Lam "n" (App isZero (App (App subtrax (Var "m")) (Var "n"))))
+
+iF = Lam "m" (Lam "a" (Lam "b" (App (App (Var "m") (Var"a")) (Var "b"))))
+
+subZ = Lam "m" (Lam "n" (App (App (App iF (App (App ltE (Var "m")) (Var "n"))) (App (App subtrax (Var "n")) (Var "m")) ) (App (App subtrax (Var "m")) (Var "n"))))
+--App (App (App iF false) zero ) false
+
+false = Lam "a" (Lam "b" (Var "b"))
+true  = Lam "a" (Lam "b" (Var "a"))
+
+anD = Lam "m" (Lam "n" (App (App (Var "m") (Var "n")) (Var "m")))
+oR  = Lam "m" (Lam "n" (App (App (Var "m") (Var "m")) (Var "n")))
+noT = Lam "m" (Lam "a" (Lam "b" (App (App (Var "m") (Var "b")) (Var "a"))))
 
 
 suc = App add one
 
-
+--(App (App subtrax (Var "n")) (Var "m"))) (App (App subtrax (Var "m")) (Var "n")))))
 --
 -- delta rules
 
@@ -242,38 +255,9 @@ un (x:xs) ys
    | elem x ys             = un xs ys
    | otherwise             = x:(un xs ys)
 
--- Adding 3 and 4 using Church-Numerals
 
-add_4_3 = App (App (Abs "n" (Abs "m" (Abs "f" (Abs "x" (App (App (Var "n") (Var "f"))
-                (App (App (Var "m") (Var "f"))
-                     (Var "x"))))))) (Abs "f'" (Abs "x'" (App (Var "f'") (App 
-					 	(Var "f'") (App (Var "f'") (App (Var "f'") (Var "x")))))))) --four
-						(Abs "g" (Abs "y" (App (Var "g") (App (Var "g") (App 
-						(Var "g") (Var "y")))))) -- three
 
--- \x -> \y -> x True
--- \x -> \y -> y False
 
--- \cond -> \then -> \else -> cond then else  -- apply condition, a boolean described above to then and else!
 
--- \f . \x . \y . (f x) y
 
--- equals needs to result in a lambda abstraction which is equivalent to a boolean
 
--- \m . \n . \x . \y .  
-
-{-
-data Exp = Abs Var Exp   -- \x -> (\y -> exp) == Abs (Var "x") (Abs (Var "y") exp)
-         | App Exp Exp
-         | Var Var
-         | Cons Constant
-  deriving (Show, Eq)
--}
-
--- leftmost innermost reduction
--- reduces the leftmost innermost redex
--- equivalent to call-by-value
-
-self_app = Abs "x" (App (Var "x") (Var "x"))
-
-throw = Abs "y" (Var "z")
