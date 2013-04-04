@@ -8,8 +8,12 @@ run p input = case (parse p "" input) of
 				Left err -> error "ykes(!)"
 				Right x -> x
 
-
-
+{-
+expression -> abstraction | application | variable
+abstraction -> "\" identifier "."
+application -> expression expression | (expression) expression
+variable -> identifier
+-}
 
 --expression :: Parser Exp
 expression = between (string "(") (string ")")
