@@ -26,14 +26,15 @@ data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
          | Cons Constant
-  deriving Eq
+  deriving (Eq, Show)
 
+{-
 instance Show Exp where
 	show (Lam var exp)   = "\\" ++ var ++ " -> " ++ show exp
 	show (App exp1 exp2) = "("++show exp1 ++ " " ++ show exp2++")"
 	show (Var var)       = var
 	show (Cons cons)     = show cons
-
+-}
 -- fv(exp) returns the free vars
 
 fv :: Exp -> [Variable]
@@ -96,6 +97,7 @@ reDuce exp
 -- \f -> \x -> (f (f (f (f (f (f (f (f (f (f x))))))))))
 
 
+-- normal reduction order
 nor (Var x) = Var x
 nor (Lam x e) = Lam x (nor e)
 nor (App e1 e2) = case cbn e1 of
@@ -114,6 +116,7 @@ cbn (App e1 e2) = case cbn e1 of
 -- ghci> app (App (App y g) four
 -- <does not terminate...>
 
+-- applicative reduction order
 app (Var x) = Var x
 app (Lam x e) = Lam x (app e)
 app (App e1 e2) = case app e1 of

@@ -3,6 +3,7 @@ module LamParsec where
 import Text.ParserCombinators.Parsec
 import Lambda
 
+lparse :: String -> Exp 
 lparse = run expression
 
 --run :: Show a => Parser a -> String -> IO ()
@@ -11,7 +12,7 @@ run p input = case (parse p "" input) of
 				Right x -> x
 
 -- Expression
--- expression ::= expression variable | expression abstraction | comb | variable | abstration
+-- expression ::= expression expression | abstraction | variable
 expression = chainl1 (variable <|> abstraction <|> parexp) comb <|>
 							   variable <|>
 							   abstraction 
@@ -28,7 +29,7 @@ parexp = do
 
 -- comb ::= ' '
 comb = do
-	space
+	space  -- operator
 	return App
 
 -- abstraction ::= 'L' lower '.' expression
