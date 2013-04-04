@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 module LamParsec where
 
 import Text.ParserCombinators.Parsec
