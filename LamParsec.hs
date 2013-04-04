@@ -53,6 +53,6 @@ constant =	do
 		return (Lam "a" (Lam "b" (Var "b")))
 
 
-=======
-empty
->>>>>>> 0bf8dafb30f023676a6005f958395d4fd72e4b9e
+
+
+
