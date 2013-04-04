@@ -1,5 +1,3 @@
-
-
 module LamParsec where
 
 import Text.ParserCombinators.Parsec
@@ -10,25 +8,19 @@ run p input = case (parse p "" input) of
 				Left err -> error "ykes(!)"
 				Right x -> x
 
+expression =	chainl1 (variable <|> abstraction <|> parexp) comb <|>
+				variable <|>
+				abstraction
 
-
---expression :: Parser Exp
-expression = between (string "(") (string ")")
-		(chainl (variable <|> abstraction) comb (Var "x") )
-		<|>
-		(chainl (variable <|> abstraction) comb (Var "x") )
-
+parexp = do
+	string "("
+	e <- expression
+	string ")"
+	return e
 
 comb = do
-	many1 space
+	space
 	return App
-
-combination :: Parser Exp
-combination = do
-		a <- expression
-		space
-		b <- expression
-		return (App a b)
 
 abstraction :: Parser Exp
 abstraction = do
@@ -42,9 +34,4 @@ variable :: Parser Exp
 variable = do
 		a <- lower
 		return (Var [a])
-
-
-
-
-
 
