@@ -1,0 +1,5 @@
+zero = L f . L x . x;
+
+one = L f . L x . f x;
+
+two = L f . L x . f (f x);
