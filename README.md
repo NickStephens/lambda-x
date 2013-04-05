@@ -6,9 +6,13 @@ An attempt to build a universal Lambda Calculus function in the Lambda Calculus.
 
 #### Concrete Syntax:
 alias &rarr; lower '=' expression ';'
+<br>
 expression &rarr; expression expression | abstraction | variable | constant
+<br>
 abstraction &rarr; 'L' lower '.' expression
+<br>
 variable &rarr; lower
+<br>
 constant &rarr; '#'lower
 
 lower &rarr; (any series of lowercase characters)
