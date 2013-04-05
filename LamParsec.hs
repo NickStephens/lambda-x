@@ -7,11 +7,11 @@ lparse = run expression
 
 --run :: Show a => Parser a -> String -> IO ()
 run p input = case (parse p "" input) of
-				Left err -> error "ykes(!): "
+				Left err -> error "need better error handler(!): "
 				Right x -> x
 
 -- Expression
--- expression ::= expression variable | expression abstraction | comb | variable | abstration
+-- expression ::= expression expression | variable | abstraction | name
 expression = chainl1 (variable <|> abstraction <|> parexp <|> name) comb <|>
 							   variable <|>
 							   abstraction <|> name
