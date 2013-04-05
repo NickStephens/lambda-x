@@ -12,9 +12,9 @@ run p input = case (parse p "" input) of
 
 -- Expression
 -- expression ::= expression variable | expression abstraction | comb | variable | abstration
-expression = chainl1 (variable <|> abstraction <|> parexp) comb <|>
+expression = chainl1 (variable <|> abstraction <|> parexp <|> name) comb <|>
 							   variable <|>
-							   abstraction 
+							   abstraction <|> name
 
 -- Parenthesized Expression
 -- parexp ::= '(' expression ')'
@@ -44,9 +44,16 @@ abstraction = do
 		e <- expression
 		return (Lam v e)
 
--- variable ::= lowercaseCharacter
+-- variable ::= lowercaseString
 variable :: Parser Exp
 variable = do
-		a <- lower
-		return (Var [a])
+		a <- many1 lower
+		return (Var a)
+
+-- constant ::= #lowercaseString
+name :: Parser Exp
+name = do
+	string "#"
+	nm <- many1 lower
+	return (Cons nm)
 

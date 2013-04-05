@@ -20,7 +20,7 @@ data Constant = Plus
 data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
-         | Cons Constant
+         | Cons String
   deriving Eq
 
 instance Show Exp where
@@ -234,9 +234,9 @@ suc = App add one
 --
 -- delta rules
 
-delta (App (App (Cons Plus) (Cons (Num a))) (Cons (Num b))) = a + b
+--delta (App (App (Cons Plus) (Cons (Num a))) (Cons (Num b))) = a + b
 
-t1 = delta (App (App (Cons Plus) (Cons (Num 4))) (Cons (Num 5)))
+--t1 = delta (App (App (Cons Plus) (Cons (Num 4))) (Cons (Num 5)))
    
 
 
