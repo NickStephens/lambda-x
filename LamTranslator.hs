@@ -62,5 +62,5 @@ aggregate file = do
 translate file = do
 	code <- aggregate file
 	writeFile outputName code
-	return ()
+	return $ "produced " ++ outputName
 	where outputName = (takeWhile (/= '.') file) ++ ".hs"

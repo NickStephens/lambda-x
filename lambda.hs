@@ -132,7 +132,7 @@ cbv (App e1 e2) = case cbv e1 of
 
 
 
-
+{-
 pair = Lam "a" (Lam "b" (Lam "f" (App (App (Var "f") (Var "a")) (Var "b"))))
 
 first = Lam "p" (App (Var "p") true) --(Lam "a" (Lam "b" (Var "a"))))
@@ -246,7 +246,7 @@ suc = App add one
 
 --t1 = delta (App (App (Cons Plus) (Cons (Num 4))) (Cons (Num 5)))
    
-
+-}
 
 
 -- Support functions: set difference and union
