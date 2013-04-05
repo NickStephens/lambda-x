@@ -1,9 +1,8 @@
-module LamAggregator where
+module LamTranslator (translate) where
 
 import Lambda
 import LamParsec
 import Text.ParserCombinators.Parsec
-import Data.Char
 
 -- take a .lam file as input
 -- and produce a haskell file containing the Abstract Syntax tree 
@@ -25,11 +24,11 @@ instance Writeable Alias where
 	write (Alias id exp) = id ++ " = " ++ (write exp)
 
 instance Writeable Exp where
-	write (Var v) = "(" ++ "Var" ++ " " ++ v ++ ")"
+	write (Var v) = "(" ++ "Var" ++ " " ++ "\"" ++ v ++ "\"" ++ ")"
 	write (Cons c) = c
 	write (App e1 e2) = "(" ++ "App" ++ " " ++ (write e1) ++ " "
 					++ (write e2) ++ ")" 
-	write (Lam v e) = "(" ++ "Lam" ++ " " ++ v ++ " " ++ (write e) ++ ")"
+	write (Lam v e) = "(" ++ "Lam" ++ " " ++ "\"" ++ v ++ "\"" ++ " " ++ (write e) ++ ")"
 
 -- Alias Parser
 -- alias ::= Letter+ '=' expression
@@ -54,11 +53,14 @@ chop = do{ a <- alias
 	   <|> return [a]
 	}
 
+lambdaPrelude = "import Lambda\n"
+
 aggregate file = do
 	contents <- readFile file
-	return $ foldl (++) "" $ map ((++"\n") . write) $ run chop contents
-	where output = takeWhile (/= '.') file
+	return $ (lambdaPrelude ++) $ foldl (++) "" $ map ((++"\n") . write) $ run chop contents
 
--- foldl (++) "" (map ((++"\n") . write) lambda)
-
-lambda = [Alias "zero" (Lam "f" (Lam "x" (Var "x"))), Alias "two" (Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (Var "x")))))] 
+translate file = do
+	code <- aggregate file
+	writeFile outputName code
+	return ()
+	where outputName = (takeWhile (/= '.') file) ++ ".hs"
