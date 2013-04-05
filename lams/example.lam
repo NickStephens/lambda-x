@@ -1,9 +1,15 @@
+module Example
+
+import Lambda
+
+-- zero func
 zero = L f . L x . x;
 one = L f . L x . f x;
 
 true = L x . L y . x;
 false = L x . L y . y;
 
-if = L bool . L then . L else . bool then else;
+lif = L bool . L then . L else . bool then else;
 
-test = #if #true #one #zero;
+-- a test function
+test = #lif #true #one #zero;

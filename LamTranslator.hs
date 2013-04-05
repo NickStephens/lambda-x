@@ -14,14 +14,17 @@ import Text.ParserCombinators.Parsec
 --	alias ::= identifier '=' expression
 --	where expression is defined in LamParsec
 
-data Alias = Alias String Exp
+data Statement = Module String | Alias String Exp | Import String | Comment
 	deriving Show
 
 class Writeable a where
 	write :: a -> String
 
-instance Writeable Alias where
+instance Writeable Statement where
+	write (Module name) = "module" ++ " " ++ name ++ " " ++ "where"
 	write (Alias id exp) = id ++ " = " ++ (write exp)
+	write (Import package) = "import" ++ " " ++ package
+	write (Comment) = ""
 
 instance Writeable Exp where
 	write (Var v) = "(" ++ "Var" ++ " " ++ "\"" ++ v ++ "\"" ++ ")"
@@ -30,9 +33,24 @@ instance Writeable Exp where
 					++ (write e2) ++ ")" 
 	write (Lam v e) = "(" ++ "Lam" ++ " " ++ "\"" ++ v ++ "\"" ++ " " ++ (write e) ++ ")"
 
+-- Statement Parser
+-- statement ::= alias | title | select | comment
+statement = try (alias) <|> pmodule <|> pimport <|> comment
+
+-- Module Parser
+-- pmodule ::= 'module' letter+ '\n'
+pmodule :: Parser Statement
+pmodule = do
+	string "module"
+	many1 $ char ' ' <|> char '\t'
+	ident <- many1 letter
+	many $ char ' ' <|> char '\t'
+	char '\n'
+	return $ Module ident
+
 -- Alias Parser
 -- alias ::= Letter+ '=' expression
-alias :: Parser Alias
+alias :: Parser Statement 
 alias = do
 	ident <- many1 letter 
 	many space
@@ -42,10 +60,30 @@ alias = do
 	char ';'
 	return $ Alias ident exp
 
+-- Import Parser
+-- pimport ::= 'import' letter+ '\n'
+pimport :: Parser Statement
+pimport = do
+	string "import"
+	many1 $ char ' ' <|> char '\t'
+	ident <- many1 letter
+	many $ char ' ' <|> char '\t'
+	char '\n'
+	return $ Import ident
+
+-- Comment Parser
+-- comment ::= '-''-' (any text) '\n'
+comment :: Parser Statement
+comment = do
+	string "--"
+	many (letter <|> digit <|> char ' ' <|> char '\t')
+	char '\n'
+	return Comment
+
 -- File Aggregation
--- chop the lambda expressions into distinct aliases
-chop :: Parser [Alias]
-chop = do{ a <- alias
+-- chop the lambda expressions into distinct statements 
+chop :: Parser [Statement]
+chop = do{ a <- statement 
 	 ; many space
 	 ; do{ as <- chop
 	     ; return (a:as)
@@ -53,11 +91,9 @@ chop = do{ a <- alias
 	   <|> return [a]
 	}
 
-lambdaPrelude = "import Lambda\n"
-
 aggregate file = do
 	contents <- readFile file
-	return $ (lambdaPrelude ++) $ foldl (++) "" $ map ((++"\n") . write) $ run chop contents
+	return $ foldl (++) "" $ map ((++"\n") . write) $ run chop contents
 
 translate file = do
 	code <- aggregate file
