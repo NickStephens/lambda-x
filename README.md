@@ -1,4 +1,4 @@
-## Lambda-X 
+# &lambda;-X 
 
 An attempt to build a universal Lambda Calculus function in the Lambda Calculus.
 
