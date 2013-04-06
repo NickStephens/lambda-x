@@ -7,23 +7,34 @@ import LamParsec
 tr = La.Lb.a;
 fl = La.Lb.b;
 
-
+--
 iF = Lp.La.Lb.p a b;
+oR  = Lp.Lq.p p q;
+anD = Lp.Lq.p q p;
+noT = Lm.La.Lb.m b a;
 
 --list functions
 empty   = #fl;
-isEmpty = Ll.l (La.Lb.fl) #tr;
+isEmpty = Ll.l (La.Lb.#fl) #tr;
 cons = Lh.Lt.Lc.Ln.c h (t c n);
 hd   = Ll.l #tr #fl;
 tl   = Ll.#frst (l (La.Lb.#pr (#scnd b) (#cons a (#scnd b))) (#pr #empty #empty));
+--append
+ap   = Lf.La.Lb.#iF (#isEmpty a) b (#cons (#hd a) (f (#tl a) b));
+apnd = La.Lb.#y #ap a b;
+--qsort
+qsy   = Lf.Las.#iF (#isEmpty as) #empty (#apnd (#apnd (f (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) (f (#gts (#hd as) (#tl as))));
+qsort = Las.#y #qsy as;
+lesy = Lf.La.Las.#iF (#isEmpty as) #empty (#iF (#lte (#hd as) a) (#cons (#hd as) (f a (#tl as))) (f a (#tl as)));
+les  = La.Las.#y #lesy a as;
+gtsy = Lf.La.Las.#iF (#isEmpty as) #empty (#iF (#gt (#hd as) a) (#cons (#hd as) (f a (#tl as))) (f a (#tl as)));
+gts  = La.Las.#y #gtsy a as;
 
 --pair functions
 pr   = Lx.Ly.Lp.p x y;
 frst = Lp.p #tr;
 scnd = Lp.p #fl;
 
-oR  = Lp.Lq.p p q;
-anD = Lp.Lq.p q p;
 
 --Y combinator
 y = Lg.(Lx.g (x x)) (Lx.g (x x));
@@ -40,21 +51,26 @@ sucs  = Ln.Lf.Lx.f (n f x);
 prdc  = Ln.Lf.Lx.n (Lg.Lh.h (g f)) (Lu.x) (Lu.u);
 isZr = Ln.n (Lx.#fl) #tr;
 subt = Lm.Ln.n #prdc m;
+plus = Lm.Ln.Lf.Lx.m f (n f x);
+mult = Lm.Ln.Lf.m (n f);
+exp  = Lm.Ln.n m;
 lte  = Lm.Ln.#isZr (#subt m n);
 eq   = Lm.Ln.#anD (#lte m n) (#lte n m);
+gt   = Lm.Ln.#noT (#lte m n);
 
 --casE matches a pattern to a list of pattern value pairs and returns a value
 casE = Li.Lp.#y #cs i p;
 cs   = Lf.Li.Lp.#iF (#eq (#frst (#hd p)) i) (#scnd (#hd p)) (f i (#tl p));
-cst  = Li.Lp.#iF (#eq (#frst (#hd p)) i) (#scnd (#hd p)) (else);
 
---test stuff for casE
+--test stuff
 ptrn  = #pr #zero #tr;
 ptrni = #pr #one #fl;
 lst   = #cons #ptrn (#cons #ptrni #empty);
 test  = #casE #zero #lst;
 tst   = La.Lb.Lc.Ld.Le.a b c d e;
-
-
+alist = #cons #one (#cons #two #empty);
+blist = #cons #three (#cons #four #empty);
+qlist = #cons #three (#cons #one (#cons #zero (#cons #four #empty)));
+qtest = Las.(#apnd (#apnd ( (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) ( (#gts (#hd as) (#tl as))));
 
 
