@@ -30,6 +30,25 @@ les  = La.Las.#y #lesy a as;
 gtsy = Lf.La.Las.#iF (#isEmpty as) #empty (#iF (#gt (#hd as) a) (#cons (#hd as) (f a (#tl as))) (f a (#tl as)));
 gts  = La.Las.#y #gtsy a as;
 
+--pairList functions car is head cdr is tail
+car  = Lp.p #tr;
+cdr  = Lp.p #fl;
+nil  = Lx.#tr;
+nul  = Lp.p (Lx.Ly.#fl);
+
+papp  = #y (Lg.La.Lb.#nul a b (#pr (#car a) (g (#cdr a) b)));
+plen  = #y (Lg.Lc.Lx.#nul x c (g (#sucs c) (#cdr x))) #zero;
+pidx  = Lx.Li. #car (i #cdr x);
+plast = #y (Lg.Lx.#nul x #nil (#nul (#cdr x) (#car x) (g (#car x))));
+prvr  = #y (Lg.La.Ll.#nul #one a (g (#pr (#car one) a) (#cdr one))) #nil;
+
+pqsy   = Lf.Las.#iF (#nul as) #nil (#papp (f (#ples (#car as) (#cdr as))) (#papp (#pr (#car as) #nil) (f (#gts (#car as) (#cdr as)))));
+pqsort = Las.#y #pqsy as;
+plesy = Lf.La.Las.#iF (#nul as) #nil (#iF (#lte (#car as) a) (#pr (#car as) (f a (#cdr as))) (f a (#cdr as)));
+ples  = La.Las.#y #plesy a as;
+pgtsy = Lf.La.Las.#iF (#nul as) #nil (#iF (#gt (#car as) a) (#pr (#car as) (f a (#cdr as))) (f a (#cdr as)));
+pgts  = La.Las.#y #pgtsy a as;
+
 --pair functions
 pr   = Lx.Ly.Lp.p x y;
 frst = Lp.p #tr;
@@ -72,5 +91,9 @@ alist = #cons #one (#cons #two #empty);
 blist = #cons #three (#cons #four #empty);
 qlist = #cons #three (#cons #one (#cons #zero (#cons #four #empty)));
 qtest = Las.(#apnd (#apnd ( (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) ( (#gts (#hd as) (#tl as))));
-
-
+plista = #pr #zero (#pr #one (#pr #two #nil));
+plistb = #pr #three (#pr #four #nil);
+pqlist = #pr #three (#pr #one (#pr #zero (#pr #four #nil)));
+pless = Las.(#ples (#car as) (#cdr as));
+pgtss = Las.(#pgts (#car as) (#cdr as));
+ppen = Las.Lbs.Lscs.#papp as (#papp bs scs);

@@ -12,4 +12,4 @@ false = L x . L y . y;
 lif = L bool . L then . L else . bool then else;
 
 -- a test function
-test = #lif #true #one #zero;
+test = L f . f #lif #true #one #zero;

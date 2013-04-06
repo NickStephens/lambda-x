@@ -55,6 +55,6 @@ variable = do
 name :: Parser Exp
 name = do
 	string "#"
-	nm <- many1 lower
+	nm <- many1 letter
 	return (Cons nm)
 

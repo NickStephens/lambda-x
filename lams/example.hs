@@ -7,4 +7,4 @@ true = (Lam "x" (Lam "y" (Var "x")))
 false = (Lam "x" (Lam "y" (Var "y")))
 lif = (Lam "bool" (Lam "then" (Lam "else" (App (App (Var "bool") (Var "then")) (Var "else")))))
 
-test = (App (App (App lif true) one) zero)
+test = (Lam "f" (App (App (App (App (Var "f") lif) true) one) zero))
