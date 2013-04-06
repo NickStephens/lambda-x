@@ -33,6 +33,8 @@ instance Writeable Exp where
 					++ (write e2) ++ ")" 
 	write (Lam v e) = "(" ++ "Lam" ++ " " ++ "\"" ++ v ++ "\"" ++ " " ++ (write e) ++ ")"
 
+linebreak = try (string "\r\n") <|> string "\n"
+
 -- Statement Parser
 -- statement ::= alias | title | select | comment
 statement = try (alias) <|> pmodule <|> pimport <|> comment
@@ -45,7 +47,7 @@ pmodule = do
 	many1 $ char ' ' <|> char '\t'
 	ident <- many1 letter
 	many $ char ' ' <|> char '\t'
-	char '\n'
+	linebreak
 	return $ Module ident
 
 -- Alias Parser
@@ -68,7 +70,7 @@ pimport = do
 	many1 $ char ' ' <|> char '\t'
 	ident <- many1 letter
 	many $ char ' ' <|> char '\t'
-	char '\n'
+	linebreak
 	return $ Import ident
 
 -- Comment Parser
@@ -77,7 +79,7 @@ comment :: Parser Statement
 comment = do
 	string "--"
 	many (letter <|> digit <|> char ' ' <|> char '\t')
-	char '\n'
+	linebreak
 	return Comment
 
 -- File Aggregation
