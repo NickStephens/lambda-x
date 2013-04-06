@@ -8,4 +8,68 @@ module Encode where
 -- compared for equality
 
 import Lambda
-import LamParsec
+import LambdaCore
+import qualified Data.Map as Map
+import Control.Monad.State
+
+type Env = Map.Map String Exp
+
+encode expr = fst $ runState (enc expr) (Map.empty, zero)
+enc (Lam v e) = do
+	(env, vn) <- get
+	case Map.lookup v env of
+		Nothing -> do
+			let advn = nor (App sucs vn)
+			put $ (Map.insert v vn env, advn)
+			e' <- enc e
+			return $ App (App pr one)
+				(App (App pr vn) e')
+		Just x -> do
+			e' <- enc e
+			return $ App (App pr one)
+				(App (App pr x) e')
+enc (App e1 e2) = do
+	e1' <- enc e1
+	e2' <- enc e2
+	return $ App (App pr two)
+		(App (App pr e1') e2')
+enc (Var v) = do
+	(env, vn) <- get
+	case Map.lookup v env of
+		Nothing -> do
+			let advn = nor (App sucs vn)
+			put $ (Map.insert v vn env, advn)
+			return $ App (App pr three) vn
+		Just x  -> return $ App (App pr three) x
+
+
+ 
+
+decode term = let rest = nor (App scnd term) in
+	case (nor (App frst term)) of
+		Lam "f" (Lam "x" (App (Var "f") (Var "x"))) ->
+			Lam (n2v (nor (App frst rest))) (decode (nor (App scnd rest)))
+		Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (Var "x")))) ->
+			App (decode (nor (App frst rest))) (decode (nor (App scnd rest)))
+		Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (App (Var "f") (Var "x"))))) ->
+			Var (n2v rest)
+{-
+decode term = do
+	let exp = nor (App frst term)
+	let rst = nor (App scnd term)
+	case exp of
+		one -> do
+			let v = n2v (nor (App frst rst))
+			e <- decode (nor (App scnd rest))
+			return $ Lam v e
+		two -> do
+			e1 <- (decode (nor (App frst rest)))
+			e2 <- (decode (nor (App scnd rest)))
+			return $ App e1 e2
+		three -> return Var (n2v rst)
+-}
+
+												
+n2v (Lam "f" (Lam "x" (Var "x"))) = "a"
+n2v (Lam "f" (Lam "x" (App (Var "f") rest))) = n2v (Lam "f" (Lam "x" rest)) ++ "'"
+

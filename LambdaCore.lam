@@ -3,19 +3,21 @@ module LambdaCore
 import Lambda
 import LamParsec
 
+--booleans
 tr = La.Lb.a;
 fl = La.Lb.b;
 
+
 iF = Lp.La.Lb.p a b;
 
+--list functions
 empty   = #fl;
 isEmpty = Ll.l (La.Lb.fl) #tr;
-
 cons = Lh.Lt.Lc.Ln.c h (t c n);
 hd   = Ll.l #tr #fl;
 tl   = Ll.#frst (l (La.Lb.#pr (#scnd b) (#cons a (#scnd b))) (#pr #empty #empty));
 
-
+--pair functions
 pr   = Lx.Ly.Lp.p x y;
 frst = Lp.p #tr;
 scnd = Lp.p #fl;
@@ -23,32 +25,35 @@ scnd = Lp.p #fl;
 oR  = Lp.Lq.p p q;
 anD = Lp.Lq.p q p;
 
+--Y combinator
 y = Lg.(Lx.g (x x)) (Lx.g (x x));
 
-
-
+--some church numerals
 zero  = Lf.Lx.x;
-one   = #sucs #zero;
-two   = #sucs #one;
-three = #sucs #two;
-four  = #sucs #three;
+one   = Lf.Lx.f x;
+two   = Lf.Lx.f (f x);
+three = Lf.Lx.f (f (f x));
+four  = Lf.Lx.f (f (f (f x)));
+
+--church numeral operations
 sucs  = Ln.Lf.Lx.f (n f x);
 prdc  = Ln.Lf.Lx.n (Lg.Lh.h (g f)) (Lu.x) (Lu.u);
-
 isZr = Ln.n (Lx.#fl) #tr;
 subt = Lm.Ln.n #prdc m;
 lte  = Lm.Ln.#isZr (#subt m n);
 eq   = Lm.Ln.#anD (#lte m n) (#lte n m);
 
+--casE matches a pattern to a list of pattern value pairs and returns a value
+casE = Li.Lp.#y #cs i p;
 cs   = Lf.Li.Lp.#iF (#eq (#frst (#hd p)) i) (#scnd (#hd p)) (f i (#tl p));
 cst  = Li.Lp.#iF (#eq (#frst (#hd p)) i) (#scnd (#hd p)) (else);
-casE = Li.Lp.#y #cs i p;
 
+--test stuff for casE
 ptrn  = #pr #zero #tr;
 ptrni = #pr #one #fl;
 lst   = #cons #ptrn (#cons #ptrni #empty);
 test  = #casE #zero #lst;
-
+tst   = La.Lb.Lc.Ld.Le.a b c d e;
 
 
 
