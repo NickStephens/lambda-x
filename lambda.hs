@@ -22,7 +22,7 @@ data Constant = Plus
               | BTrue
               | BFalse
               | Num Int
-	      | Cons
+	      | Concat
 	      | Append
      deriving (Show, Eq)
 
