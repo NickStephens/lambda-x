@@ -10,6 +10,9 @@ module Lambda where
 -- File to support lambda terms
 -- closely based on Sergio Antoy's verion
 
+-- Need to create method of implementing Haskell builtins for 
+-- exploiting its efficiency. 
+
 type Variable = String
 
 data Constant = Plus
@@ -19,6 +22,8 @@ data Constant = Plus
               | BTrue
               | BFalse
               | Num Int
+	      | Cons
+	      | Append
      deriving (Show, Eq)
 
 
@@ -144,10 +149,3 @@ un [] x = x
 un (x:xs) ys
    | elem x ys             = un xs ys
    | otherwise             = x:(un xs ys)
-
-
-
-
-
-
-
