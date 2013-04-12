@@ -13,7 +13,7 @@ run p input = case (parse p "" input) of
 
 -- Expression
 -- expression ::= expression expression | variable | abstraction | name
-expression = chainl1 (variable <|> abstraction <|> parexp <|> name) comb <|>
+expression = chainl1 (variable <|> abstraction <|> parexp <|> name <|> reduction) comb <|>
 							   variable <|>
 							   abstraction <|> name
 
@@ -58,3 +58,27 @@ name = do
 	nm <- many1 letter
 	return (Cons nm)
 
+-- reduction choice ::= @normal(expression) | @applicative(expression)
+reduction :: Parser Exp
+reduction = do 
+	char '@'
+	order <- normal <|> applicative
+	return order
+
+normal :: Parser Exp
+normal = do
+	string "normal("
+	many space
+	exp <- expression
+	many space
+	char ')'
+	return (NReduce exp)
+	
+applicative :: Parser Exp
+applicative = do
+	string "applicative("
+	many space
+	exp <- expression
+	many space
+	char ')'
+	return (AReduce exp)

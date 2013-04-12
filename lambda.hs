@@ -31,6 +31,8 @@ data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
          | Cons String
+	 | NReduce Exp
+	 | AReduce Exp
   deriving Eq
 
 
@@ -39,6 +41,8 @@ instance Show Exp where
 	show (App exp1 exp2) = "("++show exp1 ++ " " ++ show exp2++")"
 	show (Var var)       = var
 	show (Cons cons)     = show cons
+	show (NReduce e)     = "@normal(" ++ show e ++ ")"
+	show (AReduce e)     = "@applicative(" ++ show e ++ ")"
 
 -- fv(exp) returns the free vars
 
