@@ -120,6 +120,8 @@ cbn (Lam x e) = Lam x e
 cbn (App e1 e2) = case cbn e1 of
 	Lam x e -> cbn (sub e2 (Var x) e)
 	e1'     -> App e1' e2
+cbn (NReduce e) = nor e
+cbn (AReduce e) = app e
 
 ------------------------------------------------
 -- ghci> app (App (App y g) four
@@ -138,6 +140,9 @@ cbv (Lam x e) = Lam x e
 cbv (App e1 e2) = case cbv e1 of
 	Lam x e -> let e2' = cbv e2 in cbv (sub e2' (Var x) e)
 	e1'     -> let e2' = cbv e2 in App e1' e2'
+cbv (NReduce e) = nor e
+cbv (AReduce e) = app e
+
 
 
 -- Support functions: set difference and union
