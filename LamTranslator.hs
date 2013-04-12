@@ -32,6 +32,8 @@ instance Writeable Exp where
 	write (App e1 e2) = "(" ++ "App" ++ " " ++ (write e1) ++ " "
 					++ (write e2) ++ ")" 
 	write (Lam v e) = "(" ++ "Lam" ++ " " ++ "\"" ++ v ++ "\"" ++ " " ++ (write e) ++ ")"
+	write (AReduce e) = "(AReduce" ++ " " ++ (write e) ++ ")"
+	write (NReduce e) = "(NReduce" ++ " " ++ (write e) ++ ")"
 
 linebreak = try (string "\r\n") <|> string "\n"
 

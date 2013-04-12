@@ -10,6 +10,9 @@ module Lambda where
 -- File to support lambda terms
 -- closely based on Sergio Antoy's verion
 
+-- Need to create method of implementing Haskell builtins for 
+-- exploiting its efficiency. 
+
 type Variable = String
 
 data Constant = Plus
@@ -19,6 +22,8 @@ data Constant = Plus
               | BTrue
               | BFalse
               | Num Int
+	      | Concat
+	      | Append
      deriving (Show, Eq)
 
 
@@ -26,6 +31,8 @@ data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
          | Cons String
+	 | NReduce Exp
+	 | AReduce Exp
   deriving Eq
 
 
@@ -34,6 +41,8 @@ instance Show Exp where
 	show (App exp1 exp2) = "("++show exp1 ++ " " ++ show exp2++")"
 	show (Var var)       = var
 	show (Cons cons)     = show cons
+	show (NReduce e)     = "@normal(" ++ show e ++ ")"
+	show (AReduce e)     = "@applicative(" ++ show e ++ ")"
 
 -- fv(exp) returns the free vars
 
@@ -107,6 +116,8 @@ nor (App e1 e2) = case cbn e1 of
 
 
 cbn (Var x) = Var x
+cbn (NReduce e) = nor e
+cbn (AReduce e) = app e
 cbn (Lam x e) = Lam x e
 cbn (App e1 e2) = case cbn e1 of
 	Lam x e -> cbn (sub e2 (Var x) e)
@@ -126,9 +137,12 @@ app (App e1 e2) = case app e1 of
 
 cbv (Var x) = Var x
 cbv (Lam x e) = Lam x e
+cbv (NReduce e) = nor e
+cbv (AReduce e) = app e
 cbv (App e1 e2) = case cbv e1 of
 	Lam x e -> let e2' = cbv e2 in cbv (sub e2' (Var x) e)
 	e1'     -> let e2' = cbv e2 in App e1' e2'
+
 
 
 -- Support functions: set difference and union
@@ -144,10 +158,3 @@ un [] x = x
 un (x:xs) ys
    | elem x ys             = un xs ys
    | otherwise             = x:(un xs ys)
-
-
-
-
-
-
-
