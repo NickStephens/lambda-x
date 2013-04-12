@@ -51,7 +51,7 @@ pgtsy = Lf.La.Las.#iF (#nul as) #nil (#iF (#gt (#car as) a) (#pr (#car as) (f a 
 pgts  = La.Las.#y #pgtsy a as;
 
 ins    = #y (Lf.La.Las.#iF (#oR (#nul as) (#lte a (#car as))) (#pr a as) (#pr (#car as) (f a (#cdr as))));
-insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (f (#cdr as) bs)));
+insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (f (#cdr as) (#ins (#car as) bs)));
 insert = Ll.#pfold #ins #nil l;
 
 --pair functions pr is also cons for pairList
@@ -99,7 +99,7 @@ qlist = #cons #three (#cons #one (#cons #zero (#cons #four #empty)));
 qtest = Las.(#apnd (#apnd ( (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) ( (#gts (#hd as) (#tl as))));
 plista = #pr #zero (#pr #one (#pr #two #nil));
 plistb = #pr #three (#pr #four #nil);
-pqlist = #pr #three (#pr #one (#pr #zero (#pr #four (#pr #zero (#pr #two #nil)))));
+pqlist = #pr #three (#pr #one (#pr #zero (#pr #four (#pr #zero (#pr #three (#pr #two (#pr #one (#pr #two #nil))))))));
 pless = Las.(#ples (#car as) (#cdr as));
 pgtss = Las.(#pgts (#car as) (#cdr as));
 ppen = Las.Lb.Lscs.#papp as (#papp (#pr b #nil) scs);
