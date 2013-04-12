@@ -45,7 +45,7 @@ ples = (Lam "a" (Lam "as" (App (App (App y plesy) (Var "a")) (Var "as"))))
 pgtsy = (Lam "f" (Lam "a" (Lam "as" (App (App (App iF (App nul (Var "as"))) nil) (App (App (App iF (App (App gt (App car (Var "as"))) (Var "a"))) (App (App pr (App car (Var "as"))) (App (App (Var "f") (Var "a")) (App cdr (Var "as"))))) (App (App (Var "f") (Var "a")) (App cdr (Var "as"))))))))
 pgts = (Lam "a" (Lam "as" (App (App (App y pgtsy) (Var "a")) (Var "as"))))
 ins = (App y (Lam "f" (Lam "a" (Lam "as" (App (App (App iF (App (App oR (App nul (Var "as"))) (App (App lte (Var "a")) (App car (Var "as"))))) (App (App pr (Var "a")) (Var "as"))) (App (App pr (App car (Var "as"))) (App (App (Var "f") (Var "a")) (App cdr (Var "as")))))))))
-insort = (App y (Lam "f" (Lam "as" (Lam "bs" (App (App (App iF (App nul (Var "as"))) (Var "bs")) (App (App ins (App car (Var "as"))) (app (App (App (Var "f") (App cdr (Var "as"))) (Var "bs")))))))))
+insort = (App y (Lam "f" (Lam "as" (Lam "bs" (App (App (App iF (App nul (Var "as"))) (Var "bs")) (App (App ins (App car (Var "as"))) (AReduce (App (App (Var "f") (App cdr (Var "as"))) (Var "bs")))))))))
 insert = (Lam "l" (App (App (App pfold ins) nil) (Var "l")))
 
 pr = (Lam "x" (Lam "y" (Lam "p" (App (App (Var "p") (Var "x")) (Var "y")))))

@@ -1,4 +1,4 @@
-module iamTranslator (translate) where
+module LamTranslator (translate) where
 
 import Lambda
 import LamParsec
