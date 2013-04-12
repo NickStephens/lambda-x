@@ -54,16 +54,13 @@ pgtsy = Lf.La.Las.#iF (#nul as) #nil (#iF (#gt (#car as) a) (#pr (#car as) (f a 
 pgts  = La.Las.#y #pgtsy a as;
 
 ins    = #y (Lf.La.Las.#iF (#oR (#nul as) (#lte a (#car as))) (#pr a as) (#pr (#car as) (f a (#cdr as))));
-insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (f (#cdr as) bs)));
+insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (@applicative(f (#cdr as) bs))));
 insert = Ll.#pfold #ins #nil l;
 
 --pair functions pr is also cons for pairList
 pr   = Lx.Ly.Lp.p x y;
 frst = Lp.p #tr;
 scnd = Lp.p #fl;
-
-sometest = #ins #five #alist
-
 
 --Y combinator
 y = Lg.(Lx.g (x x)) (Lx.g (x x));
