@@ -13,49 +13,24 @@ oR  = Lp.Lq.p p q;
 anD = Lp.Lq.p q p;
 noT = Lm.La.Lb.m b a;
 
---list functions
-empty   = #fl;
-isEmpty = Ll.l (La.Lb.#fl) #tr;
-cons = Lh.Lt.Lc.Ln.c h (t c n);
-hd   = Ll.l #tr #fl;
-tl   = Ll.#frst (l (La.Lb.#pr (#scnd b) (#cons a (#scnd b))) (#pr #empty #empty));
---append
-ap   = Lf.La.Lb.#iF (#isEmpty a) b (#cons (#hd a) (f (#tl a) b));
-apnd = La.Lb.#y #ap a b;
---qsort 
-qsy   = Lf.Las.#iF (#isEmpty as) #empty (#apnd (#apnd (f (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) (f (#gts (#hd as) (#tl as))));
-qsort = Las.#y #qsy as;
-lesy = Lf.La.Las.#iF (#isEmpty as) #empty (#iF (#lte (#hd as) a) (#cons (#hd as) (f a (#tl as))) (f a (#tl as)));
-les  = La.Las.#y #lesy a as;
-gtsy = Lf.La.Las.#iF (#isEmpty as) #empty (#iF (#gt (#hd as) a) (#cons (#hd as) (f a (#tl as))) (f a (#tl as)));
-gts  = La.Las.#y #gtsy a as;
-
---pairList functions car is head cdr is tail
+--lisp functions car is head cdr is tail
+cons = #pr;
 car  = Lp.p #tr;
 cdr  = Lp.p #fl;
 nil  = Lx.#tr;
 nul  = Lp.p (Lx.Ly.#fl);
 
-papp  = #y (Lg.La.Lb.#nul a b (#pr (#car a) (g (#cdr a) b)));
-plen  = #y (Lg.Lc.Lx.#nul x c (g (#sucs c) (#cdr x))) #zero;
-pidx  = Lx.Li. #car (i #cdr x);
-plast = #y (Lg.Lx.#nul x #nil (#nul (#cdr x) (#car x) (g (#cdr x))));
-prvr  = #y (Lg.La.Ll.#nul l a (g (#pr (#car l) a) (#cdr l))) #nil;
+appnd  = #y (Lg.La.Lb.#nul a b (#pr (#car a) (g (#cdr a) b)));
+len  = #y (Lg.Lc.Lx.#nul x c (g (#sucs c) (#cdr x))) #zero;
+idx  = Lx.Li. #car (i #cdr x);
+last = #y (Lg.Lx.#nul x #nil (#nul (#cdr x) (#car x) (g (#cdr x))));
+rvrs  = #y (Lg.La.Ll.#nul l a (g (#pr (#car l) a) (#cdr l))) #nil;
+fold = Lf.Le.Lx.#y (Lg.Ly.#nul y e (f (#car y) (g (#cdr y)))) x;
 
--- f is function being folded
--- g is tail itself
-pfold = Lf.Le.Lx.#y (Lg.Ly.#nul y e (f (#car y) (g (#cdr y)))) x;
-
-pqsy   = Lf.Las.#iF (#nul as) #nil (#papp (f (#ples (#car as) (#cdr as))) (#papp (#pr (#car as) #nil) (f (#gts (#car as) (#cdr as)))));
-pqsort = Las.#y #pqsy as;
-plesy = Lf.La.Las.#iF (#nul as) #nil (#iF (#lte (#car as) a) (#pr (#car as) (f a (#cdr as))) (f a (#cdr as)));
-ples  = La.Las.#y #plesy a as;
-pgtsy = Lf.La.Las.#iF (#nul as) #nil (#iF (#gt (#car as) a) (#pr (#car as) (f a (#cdr as))) (f a (#cdr as)));
-pgts  = La.Las.#y #pgtsy a as;
 
 ins    = #y (Lf.La.Las.#iF (#oR (#nul as) (#lte a (#car as))) (#pr a as) (#pr (#car as) (f a (#cdr as))));
-insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (@applicative(f (#cdr as) bs))));
-insert = Ll.#pfold #ins #nil l;
+insort = #y (Lf.Las.Lbs.(#nul as) bs (f (#cdr as) (#ins (#car as) bs)));
+insert = Ll.#fold #ins #nil l;
 
 --pair functions pr is also cons for pairList
 pr   = Lx.Ly.Lp.p x y;
@@ -84,31 +59,41 @@ exp  = Lm.Ln.n m;
 lte  = Lm.Ln.#isZr (#subt m n);
 eq   = Lm.Ln.#anD (#lte m n) (#lte n m);
 gt   = Lm.Ln.#noT (#lte m n);
-
+lt   = Lm.Ln.#anD (#lte m n) (#noT (#eq m n));
 --casE matches a pattern to a list of pattern value pairs and returns a value
-casE = Li.Lp.#y #cs i p;
-cs   = Lf.Li.Lp.#iF (#eq (#frst (#hd p)) i) (#scnd (#hd p)) (f i (#tl p));
+cas  = Li.Lcs.#y #cs i cs;
+cs   = Lf.Li.Lp.(#eq (#frst (#car p)) i) (#scnd (#car p)) (f i (#cdr p));
+casE = #y (Lf.Li.Lps.(#eq (#frst (#car ps)) i) (#scnd (#car ps)) (f i (#cdr ps)));
+
+
+--set functions
+--union unions two already sorted lists outputs a sorted list
+sss = Lxs.Lys.(Lx.Ly.(Lx.Ly.#lt x y) x y (#one) ((Lx.Ly.#eq x y) x y (#two) (#three))) (#car xs) (#car ys);
+unHd = #y (Lf.Lxs.Lys.Lac.(Lx.Ly.(#nul xs) (#insort ys ac) ((#nul ys) (#insort xs ac) ((Lx.Ly.#lt x y) x y (f (#cdr xs) ys (#ins x ac)) ((Lx.Ly.#eq x y) x y (f (#cdr xs) (#cdr ys) (#ins x ac)) (f xs (#cdr ys) (#ins y ac)))))) (#car xs) (#car ys));
+union = Lxs.Lys.#unHd xs ys #nil;
 
 --test stuff
 ptrn  = #pr #zero #tr;
 ptrni = #pr #one #fl;
-lst   = #cons #ptrn (#cons #ptrni #empty);
-test  = #casE #zero #lst;
-tst   = La.Lb.Lc.Ld.Le.a b c d e;
-alist = #cons #one (#cons #two #empty);
-blist = #cons #three (#cons #four #empty);
-qlist = #cons #three (#cons #one (#cons #zero (#cons #four #empty)));
-qtest = Las.(#apnd (#apnd ( (#les (#hd as) (#tl as))) (#cons (#hd as) #empty)) ( (#gts (#hd as) (#tl as))));
-plista = #pr #zero (#pr #one (#pr #two #nil));
-plistb = #pr #three (#pr #four #nil);
-pqlist = #pr #three (#pr #one (#pr #zero (#pr #four (#pr #zero (#pr #two #nil)))));
-pless = Las.(#ples (#car as) (#cdr as));
-pgtss = Las.(#pgts (#car as) (#cdr as));
-ppen = Las.Lb.Lscs.#papp as (#papp (#pr b #nil) scs);
+test  = #casE #zero #tst;
+tst   = #cons #ptrn (#cons #ptrni (#cons #nil));
+lista = #pr #zero (#pr #one (#pr #two #nil));
+listb = #pr #three (#pr #four #nil);
+duplist = #cons #zero (#cons #zero (#cons #one (#cons #one nil)));
+list = #pr #five (#pr #three (#pr #four (#pr #two (#pr #one (#pr #zero (#pr #three (#pr #four (#pr #one (#pr #five (#pr #zero (#pr #two #nil)))))))))));
+
+ppen = Las.Lb.Lscs.#appnd as (#appnd (#pr b #nil) scs);
 sing = #pr #one #nil;
 tet = #pr #one (#pr #two (#pr #three (#pr five (#pr #four #nil))));
 tat = #pr #four (#pr #three (#pr #two (#pr #one #nil)));
 tot = #pr #zero (#pr #one (#pr #three (#pr #four #nil)));
 
-mane = #insort #pqlist #nil;
-man  = #insert #pqlist;
+mane = #insort #list (#insort #list #nil);
+man  = #insert #list;
+
+setdif = #y (Lxs.Lys.#nul ys xs (f ((#lt (#car xs) (#car ys)) xs (#cdr xs);
+
+
+
+
+
