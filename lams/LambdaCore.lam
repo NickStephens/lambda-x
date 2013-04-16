@@ -41,6 +41,9 @@ plen  = #y (Lg.Lc.Lx.#nul x c (g (#sucs c) (#cdr x))) #zero;
 pidx  = Lx.Li. #car (i #cdr x);
 plast = #y (Lg.Lx.#nul x #nil (#nul (#cdr x) (#car x) (g (#cdr x))));
 prvr  = #y (Lg.La.Ll.#nul l a (g (#pr (#car l) a) (#cdr l))) #nil;
+
+-- f is function being folded
+-- g is tail itself
 pfold = Lf.Le.Lx.#y (Lg.Ly.#nul y e (f (#car y) (g (#cdr y)))) x;
 
 pqsy   = Lf.Las.#iF (#nul as) #nil (#papp (f (#ples (#car as) (#cdr as))) (#papp (#pr (#car as) #nil) (f (#gts (#car as) (#cdr as)))));
@@ -51,14 +54,13 @@ pgtsy = Lf.La.Las.#iF (#nul as) #nil (#iF (#gt (#car as) a) (#pr (#car as) (f a 
 pgts  = La.Las.#y #pgtsy a as;
 
 ins    = #y (Lf.La.Las.#iF (#oR (#nul as) (#lte a (#car as))) (#pr a as) (#pr (#car as) (f a (#cdr as))));
-insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (f (#cdr as) bs)));
+insort = #y (Lf.Las.Lbs.#iF (#nul as) bs (#ins (#car as) (@applicative(f (#cdr as) bs))));
 insert = Ll.#pfold #ins #nil l;
 
 --pair functions pr is also cons for pairList
 pr   = Lx.Ly.Lp.p x y;
 frst = Lp.p #tr;
 scnd = Lp.p #fl;
-
 
 --Y combinator
 y = Lg.(Lx.g (x x)) (Lx.g (x x));
