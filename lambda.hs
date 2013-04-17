@@ -109,20 +109,21 @@ reDuce exp
 -- State s a = State { runState :: s -> (a, s) }
 
 -- Reduction Analytics
+type Red = StateT Int IO
+--norAnalyze :: Exp -> (Exp, Int)
+norAnalyze exp = runStateT (norTrack exp) 0
 
-norAnalyze :: Exp -> (Exp, Int)
-norAnalyze exp = runState (norTrack exp) 0
-
-norTrack :: Exp -> State Int Exp
+norTrack :: Exp -> Red Exp --tate Int Exp
 norTrack (Var x) = return $ Var x
 norTrack (Lam x e) = do
 			nextExp <- norTrack e
 			return $ Lam x (nextExp)
 norTrack (App e1 e2) = do
+			increment
 			nextExp <- cbnTrack e1
 			case nextExp of
 				Lam x e -> do
-					increment
+					liftIO $ print e2
 					e2' <- norTrack e2
 					norTrack (sub e2' (Var x) e)
 				e1' -> do	
@@ -130,11 +131,11 @@ norTrack (App e1 e2) = do
 				       	e2' <- norTrack e2
 				       	return $ App e1'' e2'
 
-cbnAnalyze :: Exp -> (Exp, Int)
-cbnAnalyze exp = runState (cbnTrack exp) 0
+--cbnAnalyze :: Exp -> (Exp, Int)
+--cbnAnalyze exp = runState (cbnTrack exp) 0
 
 -- call-by-name step reduction tracking
-cbnTrack :: Exp -> State Int Exp
+cbnTrack :: Exp -> Red Exp
 cbnTrack (App e1 e2) = do
 			nextExp <- cbnTrack e1
 			case nextExp of
@@ -144,7 +145,7 @@ cbnTrack (App e1 e2) = do
 				e1' -> return $ App e1' e2
 cbnTrack x = return x
 
-increment :: State Int () 
+increment :: Red () 
 increment = do
 		cnt <- get
 		put (cnt + 1)
@@ -204,3 +205,5 @@ un [] x = x
 un (x:xs) ys
    | elem x ys             = un xs ys
    | otherwise             = x:(un xs ys)
+
+
