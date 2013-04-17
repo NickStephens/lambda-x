@@ -1,6 +1,12 @@
 # &lambda;-X 
 
-An attempt to build a universal Lambda Calculus function in the Lambda Calculus.
+This project seeks to explore many different fields associated with functional programming and
+alternative methods of computation. It uses a lambda calculus abstract syntax, and lambda calculus
+parser written in Haskell. This lambda calculus abstract syntax and parser is used as a bridge 
+to define the lambda calculus in the lambda calculus. Haskell is our bootstrap. On top of this
+the SECD virtual machine architecture will be implemented in Haskell, allowing us to compile our
+lambda calculus implementation into to SECD instruction set, where lambda calculus programs will be
+runnable.
 
 ### Lambda Calculus Parser &larr; Written in Haskell
 
