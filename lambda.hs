@@ -1,5 +1,7 @@
 module Lambda where
 
+import Control.Monad.State
+
 -- This is similar to a Lambda bootstrap. The implementation has to
 -- be based on something, which happens to be Haskell.
 
@@ -102,9 +104,34 @@ reDuce exp
 
 --http://www.itu.dk/people/sestoft/papers/sestoft-lamreduce.pdf
 
+-- Int how many reductions it took to reach current expression
+-- Exp current expression
+-- State s a = State { runState :: s -> (a, s) }
+
+-- Reduction Analytics
+
+cbnAnalyze :: Exp -> (Exp, Int)
+cbnAnalyze exp = runState (cbnTrack exp) 0
+
+cbnTrack :: Exp -> State Int Exp
+cbnTrack (App e1 e2) = do
+			nextExp <- cbnTrack e1
+			case nextExp of
+				Lam x e -> do 
+					     exp <- increment (sub e2 (Var x) e) 
+					     cbnTrack exp
+				e1' -> return $ App e1' e2
+cbnTrack x = return x
+
+increment :: Exp -> State Int Exp
+increment reduction = do
+			cnt <- get
+			put (cnt + 1)
+			return reduction
+
+
 -- ghci> nor (App (App y g) four
 -- \f -> \x -> (f (f (f (f (f (f (f (f (f (f x))))))))))
-
 
 -- normal reduction order
 nor (Var x) = Var x
@@ -116,8 +143,6 @@ nor (App e1 e2) = case cbn e1 of
 
 
 cbn (Var x) = Var x
-cbn (NReduce e) = nor e
-cbn (AReduce e) = app e
 cbn (Lam x e) = Lam x e
 cbn (App e1 e2) = case cbn e1 of
 	Lam x e -> cbn (sub e2 (Var x) e)
