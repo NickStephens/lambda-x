@@ -34,8 +34,6 @@ data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
          | Cons String
-	 | NReduce Exp
-	 | AReduce Exp
   deriving Eq
 
 
@@ -44,8 +42,6 @@ instance Show Exp where
 	show (App exp1 exp2) = "("++show exp1 ++ " " ++ show exp2++")"
 	show (Var var)       = var
 	show (Cons cons)     = show cons
-	show (NReduce e)     = "@normal(" ++ show e ++ ")"
-	show (AReduce e)     = "@applicative(" ++ show e ++ ")"
 
 -- fv(exp) returns the free vars
 
@@ -75,14 +71,9 @@ sub m (Var x) (App e1 e2)        = (App (sub m (Var x) e1) (sub m (Var x) e2))
                                    -- app rule
 sub m (Var x) (Lam v e)
    | x == v                = (Lam v e)        -- abs rule, x is the bound var
-   | notElem x (fv e)
-     || notElem v (fv m)   = (Lam v (sub m (Var x) e))
+   | otherwise	= (Lam v (sub m (Var x) e))
                                               -- abs , x not free in e OR
                                               -- y not free in m
-   | otherwise             = (Lam z (sub m (Var x) (sub (Var z) (Var v) e)) )
-       where
-         z = fresh (un (fv m) (fv e))
-
 
 -- Beta reduction
 
@@ -129,7 +120,7 @@ norTrack (App e1 e2) = do
 			case nextExp of
 				Lam x e -> do
 					liftIO $ print e2
-					e2' <- norTrack e2
+					let e2' = cbv e2
 					norTrack (sub e2' (Var x) e)
 				e1' -> do	
 					e1'' <- norTrack e1'
@@ -189,11 +180,16 @@ app (App e1 e2) = case app e1 of
 
 cbv (Var x) = Var x
 cbv (Lam x e) = Lam x e
-cbv (NReduce e) = nor e
-cbv (AReduce e) = app e
 cbv (App e1 e2) = case cbv e1 of
 	Lam x e -> let e2' = cbv e2 in cbv (sub e2' (Var x) e)
 	e1'     -> let e2' = cbv e2 in App e1' e2'
+
+-- hybrid applicative
+ha (Var x) = Var x
+ha (Lam x e) = Lam x (ha e) 
+ha (App e1 e2) = case cbv e1 of
+	Lam x e -> let e2' = ha e2 in ha (sub e2' (Var x) e)
+	e1' -> let e1'' = ha e1' in let e2' = ha e2 in App e1'' e2'
 
 
 
