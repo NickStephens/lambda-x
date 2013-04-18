@@ -1,6 +1,7 @@
 module Lambda where
 
 import Control.Monad.State
+import System.Time
 
 -- This is similar to a Lambda bootstrap. The implementation has to
 -- be based on something, which happens to be Haskell.
@@ -107,6 +108,10 @@ reDuce exp
 -- Int how many reductions it took to reach current expression
 -- Exp current expression
 -- State s a = State { runState :: s -> (a, s) }
+
+type Count = Integer
+
+data Analytics = Analytics Count ClockTime Exp
 
 -- Reduction Analytics
 type Red = StateT Int IO
