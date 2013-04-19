@@ -1,0 +1,14 @@
+module Evaluation
+
+import Lambda
+import LambdaCore
+import LamTranslator
+
+casetest = Lterm . #casE term #patterns;
+
+patterns = #pr (#pr #one #three) (#pr (#pr #two #two) (#pr (#pr #three #one) #nil));
+
+-- subcase m (Var x) pattern
+-- Need a function similar to case but which extracts from 
+-- the second parameter passed (Var x) and and matches as 
+-- well as extracts on the third paramter passed
