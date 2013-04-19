@@ -1,0 +1,58 @@
+module Sub 
+
+import Lambda
+import LambdaCore
+import LamTranslator
+import Encode
+
+-- lamsub = Lf.Lm.Lvar.Lterm.
+
+-- subcase m (Var x) pattern
+-- Need a function similar to case but which extracts from 
+-- the second parameter passed (Var x) and and matches as 
+-- well as extracts on the third paramter passed
+
+-- this function will also need a mechanism for taking
+-- things out of the encoding
+
+-- Lam = 1
+-- App = 2
+-- Var = 3
+
+-- Variable names in the term are labelled starting with the 
+-- number 0
+
+--lamsub = #y #lsub
+
+--lsub = Lf.Lm.Lvar.Lterm. #lamguard (#pr term (#pr var (#pr m f))) #patterns
+
+-- extracts a value from an encoded "constructor"
+extract = #scnd;
+
+-- matching functions expect an encoded term
+matchvar = Lterms. #eq #three (#car terms);
+matchlam = Lterms. #eq #one (#car terms);
+matchapp = Lterms. #eq #two (#car terms);
+
+-- expects a list of the form [term, (Var x), m, f]
+varaction = Llist. (#eq (#extract (#car (#cdr list))) (#extract (#car list))) (#car (#cdr (#cdr list))) (#car list);
+--lamaction =
+--appaction =
+
+vartestlist = #pr (#pr #three #two) (#pr (#pr #three #one) (#pr m (#pr f #nil)));
+
+-- ((#pr (Largs. (#eq #three (#car args))))
+--		       (#eq (#extract (#car (#cdr args))) (#car (#cdr (#cdr args)))
+--		       (#car (#cdr (#cdr args)))
+--		       (#three (#extract (#car (#cdr args)))))
+--		      )
+--		 (#pr (#pr (#eq two (#car args)))
+--		       (
+-- extracts a value from a .lam "constructor"
+
+
+-- general case statement which allows for a boolean expression to
+-- be in the pattern expression
+
+lamgaurd = #y (Lf.Li.Lps.((#frst (#car ps)) i) (#scnd (#car ps)) (f i (#cdr ps)));
+
