@@ -35,7 +35,9 @@ matchlam = Lterms. #eq #one (#car terms);
 matchapp = Lterms. #eq #two (#car terms);
 
 -- expects a list of the form [term, (Var x), m, f]
-varaction = Llist. (#eq (#extract (#car (#cdr list))) (#extract (#car list))) (#car (#cdr (#cdr list))) (#car list);
+varaction = Llist. (#eq (#extract (#car (#cdr list))) (#extract (#car list))) 
+			(#car (#cdr (#cdr list))) 
+			(#car list);
 --lamaction =
 --appaction =
 

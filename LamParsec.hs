@@ -29,7 +29,7 @@ parexp = do
 
 -- comb ::= ' '
 comb = do
-	space  -- operator
+	many1 space  -- operator
 	return App
 
 -- abstraction ::= 'L' lower '.' expression
