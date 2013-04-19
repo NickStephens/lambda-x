@@ -82,8 +82,7 @@ pimport = do
 comment :: Parser Statement
 comment = do
 	string "--"
-	many (letter <|> digit <|> char ' ' <|> char '\t' <|> char '('
-		<|> char ')' <|> char '#')
+	many (noneOf "\n")
 	linebreak
 	return Comment
 

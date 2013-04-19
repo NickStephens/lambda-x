@@ -12,3 +12,14 @@ patterns = #pr (#pr #one #three) (#pr (#pr #two #two) (#pr (#pr #three #one) #ni
 -- Need a function similar to case but which extracts from 
 -- the second parameter passed (Var x) and and matches as 
 -- well as extracts on the third paramter passed
+
+-- this function will also need a mechanism for taking
+-- things out of the encoding
+
+-- Lam = 1
+-- App = 2
+-- Var = 3
+
+-- This model is based heavily on Owen Meyer's casE
+
+subcs = Lf.Lm.Lvar.Lterm.(#And

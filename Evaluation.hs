@@ -8,3 +8,9 @@ patterns = (App (App pr (App (App pr one) three)) (App (App pr (App (App pr two)
 
 
 
+
+
+
+
+
+
