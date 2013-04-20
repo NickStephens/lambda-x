@@ -66,5 +66,3 @@ evalmatchapp = Larg. #eq #two (#frst arg);
 evallamguard = #y (Lf.Li.Lps.((#frst (#car ps)) i) 
 			((#scnd (#car ps))) 
 			(f i (#cdr ps)));
-
-fakef = Larg. arg;
