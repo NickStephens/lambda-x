@@ -1,0 +1,46 @@
+module Evaluation
+
+import LamTranslator
+import Encode
+import Lambda
+import LambdaCore
+import Sub
+
+-- EVALUATION STRATEGIES
+
+--Call-by-Value
+lamcbv = #y #lamcbvrec;
+
+lamcbvrec = Lf.Lterm. #evallamguard term
+			(#pr (#pr #evalmatchvar (term))
+			(#pr (#pr #evalmatchlam (term))
+			(#pr (#pr #evalmatchapp (#cbvcase f term)) #nil)));
+
+--cbvcase correlates to
+--cbv (App e1 e2) = case cbv e1 of
+--	Lam x e -> cbv (sub (cbv e2) (Var x) e)
+--	e1'     -> cbv (App e1' (cbv e2))
+cbvcase = Lf.Lterm. (#evalmatchlam (f (#extractaone term)) 
+			(f
+				(#lamsub (f (#extractatwo term))
+				(#pr #three (#extractlname (f (#extractaone term))))
+				(#extractlexp (f (#extractaone term)))))
+			(f
+				(#pr #two
+				(#pr (f (#extractaone term)) (f (#extractatwo term))))));
+
+testcasevar = x;
+testcaselam = La. b c;
+testcaseapp = #plus #one #one;
+
+--EVAL_MATCHERS
+evalmatchvar = Larg. #eq #three (#frst arg);
+evalmatchlam = Larg. #eq #one (#frst arg);
+evalmatchapp = Larg. #eq #two (#frst arg);
+
+--EVAL_LAMGUARD
+evallamguard = #y (Lf.Li.Lps.((#frst (#car ps)) i) 
+			((#scnd (#car ps))) 
+			(f i (#cdr ps)));
+
+fakef = Larg. arg;
