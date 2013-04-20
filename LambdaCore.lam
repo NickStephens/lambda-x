@@ -81,6 +81,8 @@ lista = #pr #zero (#pr #one (#pr #two #nil));
 listb = #pr #three (#pr #four #nil);
 duplist = #cons #zero (#cons #zero (#cons #one (#cons #one nil)));
 list = #pr #five (#pr #three (#pr #four (#pr #two (#pr #one (#pr #zero (#pr #three (#pr #four (#pr #one (#pr #five (#pr #zero (#pr #two #nil)))))))))));
+listc = #cons #one (#cons #zero (#cons #two #nil));
+
 
 ppen = Las.Lb.Lscs.#appnd as (#appnd (#pr b #nil) scs);
 sing = #pr #one #nil;
