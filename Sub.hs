@@ -10,6 +10,7 @@ lamsubrec = (Lam "f" (Lam "m" (Lam "var" (Lam "term" (App (App lamguard (App (Ap
 
 
 
+
 lamguard = (App y (Lam "f" (Lam "i" (Lam "ps" (App (App (App (App frst (App car (Var "ps"))) (Var "i")) (App (App scnd (App car (Var "ps"))) (Var "i"))) (App (App (Var "f") (Var "i")) (App cdr (Var "ps"))))))))
 
 
@@ -50,7 +51,3 @@ lamaction = (Lam "list" (App (App (App (App eq (App extractv (App car (App cdr (
 
 
 appaction = (Lam "list" (App (App pr two) (App (App pr (App (App (App (App car (App cdr (App cdr (App cdr (Var "list"))))) (App car (App cdr (App cdr (Var "list"))))) (App car (App cdr (Var "list")))) (App extractaone (App car (Var "list"))))) (App (App (App (App car (App cdr (App cdr (App cdr (Var "list"))))) (App car (App cdr (App cdr (Var "list"))))) (App car (App cdr (Var "list")))) (App extractatwo (App car (Var "list")))))))
-
-vartestlist = (App (App pr (App (App pr three) two)) (App (App pr (App (App pr three) one)) (App (App pr (Var "m")) (App (App pr (Var "f")) nil))))
-lamtestlist = (App (App pr (App (App pr one) (App (App pr three) (App (App pr three) zero)))) (App (App pr (App (App pr three) four)) (App (App pr (Var "m")) (App (App pr (Var "f")) nil))))
-apptestlist = (App (App pr (App (App pr two) (App (App pr one) two))) (App (App pr (App (App pr three) four)) (App (App pr (Var "m")) (App (App pr (Var "f")) nil))))

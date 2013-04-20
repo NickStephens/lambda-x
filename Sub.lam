@@ -73,7 +73,12 @@ varaction = Llist. (#eq (#extractv (#car (#cdr list))) (#extractv (#car list)))
 --	| otherwise	= (Lam v (sub m (Var x) e))
 lamaction = Llist. (#eq (#extractv (#car (#cdr list))) (#extractlname (#car list))
 			(#car list)
-			(#pr #one (#pr (#extractlname (#car list)) ((#car (#cdr (#cdr (#cdr list)))) (#car (#cdr (#cdr list))) (#car (#cdr list)) (#extractlexp (#car list))))));
+			(#pr #one 
+			(#pr (#extractlname (#car list)) 
+			((#car (#cdr (#cdr (#cdr list)))) 
+			(#car (#cdr (#cdr list))) 
+			(#car (#cdr list)) 
+			(#extractlexp (#car list))))));
 
 -- appaction correlates to
 -- 	(App (sub m (Var x) e1) (sub m (Var x) e2))
