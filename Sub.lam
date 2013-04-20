@@ -5,34 +5,22 @@ import LambdaCore
 import LamTranslator
 import Encode
 
+-- LAMSUB
+-- lambda calculus equivalent of sub
+
 lamsub = #y #lamsubrec;
-
--- TEST ARGS
--- term (no encoding)
--- App (Var "b") (Var "c")
-term = #pr #two (#pr (#pr #three #one) (#pr #three #two)); 
--- var (no encoding)
--- (Var "b")
-var = #pr #three #one;
--- m (no encoding)
--- (Var "d")
-m = #pr #three #four;
-
--- Substitute m for var in term
-testsub = #lamsub #m #var #term;
 
 lamsubrec = Lf.Lm.Lvar.Lterm. #lamguard 
 				(#pr term (#pr var (#pr m (#pr f #nil))))
 				(#pr (#pr #matchvar #varaction) (#pr (#pr #matchapp #appaction) (#pr (#pr #matchlam #lamaction) #nil)));
 
--- subcase m (Var x) pattern
--- Need a function similar to case but which extracts from 
--- the second parameter passed (Var x) and and matches as 
--- well as extracts on the third paramter passed
-
--- this function will also need a mechanism for taking
--- things out of the encoding
-
+-- GUARDS
+-- general case statement which allows for a boolean expression to
+-- be in the pattern expression
+-- applies subject (i) to the callback in the sequence (ps)
+lamguard = #y (Lf.Li.Lps.((#frst (#car ps)) i) 
+			((#scnd (#car ps)) i) 
+			(f i (#cdr ps)));
 
 -- ENCODING INFORMATION
 
@@ -64,9 +52,9 @@ extractatwo = Lapp. #scnd (#scnd app);
 -- MATCHERS
 -- matching functions expect an encoded term
 -- each returns a boolean
-matchvar = Lterms. #eq #three (#car terms);
-matchlam = Lterms. #eq #one (#car terms);
-matchapp = Lterms. #eq #two (#car terms);
+matchvar = Lterms. #eq #three (#car (#car terms));
+matchlam = Lterms. #eq #one (#car (#car terms));
+matchapp = Lterms. #eq #two (#car (#car terms));
 
 -- ACTIONS
 -- actions expect a list of the form [term, (Var x), m, f]
@@ -98,19 +86,3 @@ appaction = Llist. #pr #two
 		      (#car (#cdr (#cdr list)))
 		      (#car (#cdr list))
 		      (#extractatwo (#car list))));
-
--- ACTION TESTING LIST
-vartestlist = #pr (#pr #three #two) (#pr (#pr #three #one) (#pr m (#pr f #nil)));
-
-lamtestlist = #pr (#pr #one (#pr #three (#pr #three #zero))) 
-			(#pr (#pr #three #four)
-			(#pr m (#pr f #nil)));
-
-apptestlist = #pr (#pr #two (#pr #one #two)) 
-			(#pr (#pr #three #four)
-			(#pr m (#pr f #nil)));
-
--- GUARDS
--- general case statement which allows for a boolean expression to
--- be in the pattern expression
-lamguard = #y (Lf.Li.Lps.((#frst (#car ps)) i) (#scnd (#car ps)) (f i (#cdr ps)));
