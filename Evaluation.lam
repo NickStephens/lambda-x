@@ -9,6 +9,7 @@ import Sub
 -- EVALUATION STRATEGIES
 
 --Call-by-Value
+--LAMCBV
 lamcbv = #y #lamcbvrec;
 
 lamcbvrec = Lf.Lterm. #evallamguard term
@@ -20,18 +21,41 @@ lamcbvrec = Lf.Lterm. #evallamguard term
 --cbv (App e1 e2) = case cbv e1 of
 --	Lam x e -> cbv (sub (cbv e2) (Var x) e)
 --	e1'     -> cbv (App e1' (cbv e2))
-cbvcase = Lf.Lterm. (#evalmatchlam (f (#extractaone term)) 
+cbvcase = Lf.Lterm. #evalmatchlam (f (#extractaone term)) 
 			(f
 				(#lamsub (f (#extractatwo term))
 				(#pr #three (#extractlname (f (#extractaone term))))
 				(#extractlexp (f (#extractaone term)))))
 			(f
 				(#pr #two
-				(#pr (f (#extractaone term)) (f (#extractatwo term))))));
+				(#pr (f (#extractaone term)) (f (#extractatwo term)))));
 
-testcasevar = x;
-testcaselam = La. b c;
-testcaseapp = #plus #one #one;
+-- Hybrid Applicative
+-- LAMHA
+
+lamha = #y #lamharec;
+
+lamharec = Lf.Lterm. #evallamguard term
+			(#pr (#pr #evalmatchvar (term))
+			(#pr (#pr #evalmatchlam (#lamhalamcase f term))
+			(#pr (#pr #evalmatchapp (#lamhaappcase f term)) #nil)));
+
+-- lamhalamcase correlates to
+-- ha (Lam x e) = Lam x (ha e)
+lamhalamcase = Lf.Llam. #pr #one (#pr (#extractlname term) (f (#extractlexp term)));
+
+-- lamhaappcase correlates to
+--ha (App e1 e2) = case cbv e1 of
+--	Lam x e -> ha (sub (ha e2) (Var x) e)
+--	e1      -> App (ha (cbv e1)) (ha e2)
+lamhaappcase = Lf.Lterm. #evalmatchlam (#lamcbv (#extractaone term)) 
+			(f
+				(#lamsub (f (#extractatwo term))
+				(#pr #three (#extractlname (f (#extractaone term))))
+				(#extractlexp (#lamcbv (#extractaone term)))))
+
+				(#pr #two
+				(#pr (f (#lamcbv (#extractaone term))) (f (#extractatwo term))));
 
 --EVAL_MATCHERS
 evalmatchvar = Larg. #eq #three (#frst arg);
