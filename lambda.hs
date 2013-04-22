@@ -34,7 +34,7 @@ data Exp = Lam Variable Exp
          | App Exp Exp
          | Var Variable
          | Cons String
-  deriving Eq
+  deriving (Ord, Eq)
 
 
 instance Show Exp where
