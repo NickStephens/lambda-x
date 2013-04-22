@@ -11,10 +11,25 @@ import Lambda
 import LambdaCore
 import qualified Data.Map as Map
 import Control.Monad.State
+import Data.Maybe
 
 type Env = Map.Map String Exp
 
+--type RC = StateT (Env, Exp) IO
+type RC = State (Env, Exp)
+
+recode expr = fst$runState (rc expr) (Map.empty, zero)
+rc :: Exp -> RC Exp
+rc expr = do
+	x <- enc expr
+	let xx = cbv (App cbV x)
+	(env, _) <- get
+	dex <- deco xx
+	return dex
+
+
 encode expr = fst $ runState (enc expr) (Map.empty, zero)
+enc :: Exp -> RC Exp
 enc (Lam v e) = do
 	(env, vn) <- get
 	case Map.lookup v env of
@@ -42,8 +57,26 @@ enc (Var v) = do
 			return $ App (App pr three) vn
 		Just x  -> return $ App (App pr three) x
 
+deco :: Exp -> RC Exp
+deco term = do
+	let rest = nor (App scnd term)
+	(env, _) <- get
+	let env' = swap env
+	case (nor (App frst term)) of
+		Lam "f" (Lam "x" (App (Var "f") (Var "x"))) -> do
+			e <- deco (nor (App scnd rest))
+			let nm = nor (App frst rest)
+			let nm' = fromJust $ Map.lookup nm env'
+			return $ Lam nm' e
+		Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (Var "x")))) -> do
+			e1 <- deco (nor (App frst rest))
+			e2 <- deco (nor (App scnd rest))
+			return $ App e1 e2
+		Lam "f" (Lam "x" (App (Var "f") (App (Var "f") (App (Var "f") (Var "x"))))) -> do
+			let name = fromJust $ Map.lookup rest env'
+			return $ Var name
 
- 
+swap env = Map.fromList $ map (\(a,b) -> (b,a)) $ Map.toList env
 
 decode term = let rest = nor (App scnd term) in
 	case (nor (App frst term)) of
@@ -72,4 +105,6 @@ decode term = do
 												
 n2v (Lam "f" (Lam "x" (Var "x"))) = "a"
 n2v (Lam "f" (Lam "x" (App (Var "f") rest))) = n2v (Lam "f" (Lam "x" rest)) ++ "'"
+
+
 
