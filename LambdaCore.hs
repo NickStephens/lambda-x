@@ -1,5 +1,6 @@
 module LambdaCore where
 import Lambda
+import LamTranslator
 import LamParsec
 
 tr = (Lam "a" (Lam "b" (Var "a")))
@@ -59,18 +60,37 @@ sss = (Lam "xs" (Lam "ys" (App (App (Lam "x" (Lam "y" (App (App (App (App (Lam "
 unHd = (App y (Lam "f" (Lam "xs" (Lam "ys" (Lam "ac" (App (App (Lam "x" (Lam "y" (App (App (App nul (Var "xs")) (App (App insort (Var "ys")) (Var "ac"))) (App (App (App nul (Var "ys")) (App (App insort (Var "xs")) (Var "ac"))) (App (App (App (App (Lam "x" (Lam "y" (App (App lt (Var "x")) (Var "y")))) (Var "x")) (Var "y")) (App (App (App (Var "f") (App cdr (Var "xs"))) (Var "ys")) (App (App ins (Var "x")) (Var "ac")))) (App (App (App (App (Lam "x" (Lam "y" (App (App eq (Var "x")) (Var "y")))) (Var "x")) (Var "y")) (App (App (App (Var "f") (App cdr (Var "xs"))) (App cdr (Var "ys"))) (App (App ins (Var "x")) (Var "ac")))) (App (App (App (Var "f") (Var "xs")) (App cdr (Var "ys"))) (App (App ins (Var "y")) (Var "ac"))))))))) (App car (Var "xs"))) (App car (Var "ys"))))))))
 union = (Lam "xs" (Lam "ys" (App (App (App unHd (Var "xs")) (Var "ys")) nil)))
 
+dfHd = (App y (Lam "f" (Lam "xs" (Lam "ys" (Lam "ac" (App (App (Lam "x" (Lam "y" (App (App (App nul (Var "xs")) (Var "ac")) (App (App (App nul (Var "ys")) (Var "xs")) (App (App (App (App (Lam "x" (Lam "y" (App (App lt (Var "x")) (Var "y")))) (Var "x")) (Var "y")) (App (App (App (Var "f") (App cdr (Var "xs"))) (Var "ys")) (App (App ins (Var "x")) (Var "ac")))) (App (App (App (App (Lam "x" (Lam "y" (App (App eq (Var "x")) (Var "y")))) (Var "x")) (Var "y")) (App (App (App (Var "f") (App cdr (Var "xs"))) (App cdr (Var "ys"))) (Var "ac"))) (App (App (App (Var "f") (Var "xs")) (App cdr (Var "ys"))) (Var "ac")))))))) (App car (Var "xs"))) (App car (Var "ys"))))))))
+diff = (Lam "xs" (Lam "ys" (App (App (App dfHd (Var "xs")) (Var "ys")) nil)))
+
+subb = (App y (Lam "f" (Lam "m" (Lam "x" (Lam "val" (App (App casE (App frst (Var "val"))) cases))))))
+cases = (App (App cons (App (App pr three) varC)) (App (App cons (App (App pr two) appC)) (App (App cons (App (App pr one) lamC)) nil)))
+varC = (App (App (App (App eq (App scnd (Var "x"))) (App scnd (Var "val"))) (Var "m")) (Var "val"))
+appC = (App (App pr two) (App (App pr (App (App (App (Var "f") (Var "m")) (Var "x")) (App frst (App scnd (Var "val"))))) (App (App (App (Var "f") (Var "m")) (Var "x")) (App scnd (App scnd (Var "val"))))))
+lamC = (App (App (App (App eq (App scnd (Var "x"))) (App frst (App scnd (Var "val")))) (Var "val")) (App (App pr one) (App (App pr (App frst (App scnd (Var "val")))) (App (App (App (Var "f") (Var "m")) (Var "x")) (App scnd (App scnd (Var "val")))))))
+cbV = (App y (Lam "f" (Lam "exp" (App (App casE (App frst (Var "exp"))) patterns))))
+patterns = (App (App cons (App (App pr three) varCbv)) (App (App cons (App (App pr two) appCbv)) (App (App cons (App (App pr one) lamCbv)) nil)))
+varCbv = (Var "exp")
+lamCbv = (Var "exp")
+appCbv = (App (Lam "ei" (App (App (App (App eq (App frst (Var "ei"))) one) lamCase) owCase)) (App cbV (App frst (App scnd (Var "exp")))))
+lamCase = (App (Lam "eii" (App cbV (App (App (App subb (Var "eii")) (App (App pr three) (App frst (App scnd (Var "ei"))))) (App scnd (App scnd (Var "ei")))))) (App cbV (App scnd (App scnd (Var "exp")))))
+owCase = (App (Lam "eii" (App (App pr two) (App (App pr (Var "ei")) (Var "eii")))) (App cbV (App scnd (App scnd (Var "exp")))))
+
 ptrn = (App (App pr zero) tr)
 ptrni = (App (App pr one) fl)
 test = (App (App casE zero) tst)
-tst = (App (App cons ptrn) (App (App cons ptrni) (App cons nil)))
-lista = (App (App pr zero) (App (App pr one) (App (App pr two) nil)))
-listb = (App (App pr three) (App (App pr four) nil))
-duplist = (App (App cons zero) (App (App cons zero) (App (App cons one) (App (App cons one) (Var "nil")))))
+tst = (App (App cons ptrn) (App (App cons ptrni) nil))
+lista = (App (App cons one) (App (App cons two) nil))
+listb = (App (App cons two) (App (App cons three) nil))
+listc = (App (App cons two) (App (App cons three) nil))
+duplist = (App (App cons zero) (App (App cons zero) (App (App cons one) (App (App cons one) nil))))
 list = (App (App pr five) (App (App pr three) (App (App pr four) (App (App pr two) (App (App pr one) (App (App pr zero) (App (App pr three) (App (App pr four) (App (App pr one) (App (App pr five) (App (App pr zero) (App (App pr two) nil))))))))))))
+lis = (App (App cons three) (App (App cons two) nil))
 ppen = (Lam "as" (Lam "b" (Lam "scs" (App (App appnd (Var "as")) (App (App appnd (App (App pr (Var "b")) nil)) (Var "scs"))))))
 sing = (App (App pr one) nil)
 tet = (App (App pr one) (App (App pr two) (App (App pr three) (App (App pr (Var "five")) (App (App pr four) nil)))))
 tat = (App (App pr four) (App (App pr three) (App (App pr two) (App (App pr one) nil))))
 tot = (App (App pr zero) (App (App pr one) (App (App pr three) (App (App pr four) nil))))
+mann = (App (App insort mane) mane)
 mane = (App (App insort list) (App (App insort list) nil))
-man = (App insert list)
+man = (App insert lis)
