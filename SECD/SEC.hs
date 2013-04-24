@@ -12,7 +12,7 @@ data Store   = BRT [Instr] | Call (Scratch, Env, Code) deriving Show
 
 type Moment  = (Scratch, Env, Code)
 
-data Value   = I Integer | L [Value] | Cl Closure | B Bool | E Env | Bl Block deriving (Show, Eq)
+data Value   = I Integer | L [Value] | Cl Closure | B Bool | E Env | Bl Block deriving Eq
 type Var     = String
 type Closure = (Func, Env)
 type Const   = Integer
@@ -22,7 +22,7 @@ data Oper    = Add | Sub | Mul | Div | Mod deriving (Show, Eq)
 data Rela    = Lt | Gt | Equ deriving (Show, Eq)
 data Instr =
 			ACC Int |
-			CLOS | LETREC | LETAILREC |
+			CLOS | LETREC | TLETREC |
 			LET |
 			ENDLET |
 			SEL |
@@ -35,13 +35,15 @@ data Instr =
 			NIL | CONS | CAR | CDR | NULL deriving (Eq, Show)
 			
 
-{-
+
 instance Show Value where
 	show (I i) = show i
 	show (L v) = show v
 	show (Cl (f, e)) = "Cl ("++show f++",env)"
 	show (B b) = show b
--}
+	show (E env) = show env
+	show (Bl block) = "Bl "++show block
+
 delta :: Secd ()
 delta = do
 	instr <- topC
@@ -53,7 +55,7 @@ delta = do
 		LET -> do
 			let v = head s
 			put (s, v:e, c)
-		LETAILREC -> do
+		TLETREC -> do
 			let Bl c' = head s
 			put (Cl (c', Bl c':[]):tail s, e, c)
 		LETREC -> do
@@ -177,10 +179,25 @@ fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 	BL [ACC 2,RTN],
 	BL [ACC 3, LETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
-t3   = [fact', LETAILREC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
+t3   = [fact', TLETREC, NIL, LDC (I 1), CONS, LDC (I 3), CONS, TAP]
 fact' = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 	BL [ACC 2],
-	BL [ACC 3, LETAILREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+	BL [ACC 3, TLETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+
+
+t4 = [revs, TLETREC, NIL, NIL, CONS, fibbd, TLETREC, NIL, LDC (I 6), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
+fibbd = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+	BL [ACC 1, RTN],
+	BL [ACC 3, TLETREC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+
+
+t5 = [revs, TLETREC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
+revs = BL [ACC 1, NULL, SEL,
+	BL [ACC 2],
+	BL [ACC 3, TLETREC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
+
+
+
 --Stack operations
 
 pushS :: Value -> Secd ()
@@ -214,5 +231,10 @@ popE = do
 	return ()
 
 
+{-
+
+[L [L [I 2,I 1],L []],Cl ([ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]],[Bl [ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]]])]
 
 
+
+-}
