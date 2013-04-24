@@ -1,0 +1,19 @@
+FEATURES FOR LAMBDA-X
+MINIMAL, UNTYPED FUNCTIONAL LANGUAGE WHICH RUNS ON A SECD VIRTUAL MACHINE
+
+DELTA RULES
+-----------
+* Automatic construction of structured data types like pairs and nested pairs
+* Automatic conversion of numbers to church-numerals
+
+ENVIRONMENT
+-----------
+* LET statements, to avoid unneccesary typing
+
+FUNCTIONS
+---------
+* Name recursion (no definitional necessity for y-combinator)
+
+MINIMALISM
+----------
+* No explicit parameterization to functions (only aliases and abstractions)
