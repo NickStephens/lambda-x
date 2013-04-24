@@ -22,12 +22,12 @@ data Oper    = Add | Sub | Mul | Div | Mod deriving (Show, Eq)
 data Rela    = Lt | Gt | Equ deriving (Show, Eq)
 data Instr =
 			ACC Int |
-			CLOS  | RECL |
-			LET | LETREC |
+			CLOS | LETREC | LETAILREC |
+			LET |
 			ENDLET |
 			SEL |
 			BL Block | --load func
-			APP | RAP |
+			APP | RAP | TAP |
 			RTN |
 			LDC Value |
 			Op Oper |
@@ -53,9 +53,12 @@ delta = do
 		LET -> do
 			let v = head s
 			put (s, v:e, c)
+		LETAILREC -> do
+			let Bl c' = head s
+			put (Cl (c', Bl c':[]):tail s, e, c)
 		LETREC -> do
 			let Bl c' = head s
-			put (Cl (c', Bl c':e):tail s, e, c)
+			put (Cl (c',Bl c':e):tail s, e, c)
 		ENDLET -> do
 			popE
 		SEL -> do
@@ -66,15 +69,15 @@ delta = do
 				False -> put (tail s, e, bfl++cs)
 		BL bl -> do
 			put (Bl bl:s, e, c)
-		RECL -> do
-			let Bl c' = head s
-			put (Cl (c',[]):tail s, e, c)
 		CLOS -> do
 			let Bl c' = head s
 			put (Cl (c',e):tail s, e, c)
 		APP -> do
 	 		let (L v:Cl (c',e'):rest) = s
 			put (Bl c:E e:rest, v++e', c')
+		TAP -> do
+			let (L v:Cl (c',e'):rest) = s
+			put (rest, v++e', c')
 		RTN -> do
 			let (v:Bl c':E e':rest) = s
 			put (v:rest, e', c')
@@ -161,7 +164,7 @@ displayEnv e = do
 			liftIO $ putStrLn "   []"
 			return ()
 		else do
-			liftIO $ putStrLn ("   "++(show.head) e)
+			liftIO $ putStrLn ("   "++ show e)
 			displayEnv $tail e
 --runtest tp = evalStateT (runErrorT run') tp
 runtest tp = runErrorT (evalStateT run' tp)
@@ -171,10 +174,13 @@ cl = [ACC 1, LDC (I 1), Op Add, RTN]
 
 t2   = [fact, LETREC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
 fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
-	BL [ACC 2, RTN],
-	BL [ACC 3, LETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, ENDLET, ENDLET, APP],RTN]
+	BL [ACC 2,RTN],
+	BL [ACC 3, LETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
-
+t3   = [fact', LETAILREC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
+fact' = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
+	BL [ACC 2],
+	BL [ACC 3, LETAILREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
 --Stack operations
 
 pushS :: Value -> Secd ()
