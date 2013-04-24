@@ -6,7 +6,14 @@ Def -> Name {arg} = Exp
 
 ------------------------------------------
 
-Exp -> App | Lam | Var | Let | Case | Name
+Exp -> App | Lam | Var | Let | Case | Name | (Exp) | Numeric | List
+
+List -> [{Int ','} Int] | []
+
+Numeric -> Int | Int Oper Int
+
+Oper -> '+' | '-' | '*' | '/' |
+		'>' | '<' | '==' | '<=' | '>='
 
 App -> Exp Exp
 
@@ -14,10 +21,14 @@ Lam -> L Name . Exp
 
 Var -> Name
 
-Let -> 'Let' Def in Exp
+Let -> 'Let' Def 'in' Exp
 
 Case -> 'Case' Exp 'of' {Exp '->' Exp}
 
 ==========================================
 
 Name -> Uppercase followed by any number of alphanumerics
+
+
+
+
