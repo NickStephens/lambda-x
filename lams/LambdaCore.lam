@@ -1,6 +1,8 @@
 module LambdaCore
 
 import Lambda
+import Encode
+import LamTranslate
 import LamParsec
 
 --booleans

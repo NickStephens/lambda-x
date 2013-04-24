@@ -1,6 +1,7 @@
 module LambdaCore
 
 import Lambda
+import LamTranslator
 import LamParsec
 
 --booleans
@@ -71,17 +72,38 @@ casE = #y (Lf.Li.Lps.(#eq (#frst (#car ps)) i) (#scnd (#car ps)) (f i (#cdr ps))
 sss = Lxs.Lys.(Lx.Ly.(Lx.Ly.#lt x y) x y (#one) ((Lx.Ly.#eq x y) x y (#two) (#three))) (#car xs) (#car ys);
 unHd = #y (Lf.Lxs.Lys.Lac.(Lx.Ly.(#nul xs) (#insort ys ac) ((#nul ys) (#insort xs ac) ((Lx.Ly.#lt x y) x y (f (#cdr xs) ys (#ins x ac)) ((Lx.Ly.#eq x y) x y (f (#cdr xs) (#cdr ys) (#ins x ac)) (f xs (#cdr ys) (#ins y ac)))))) (#car xs) (#car ys));
 union = Lxs.Lys.#unHd xs ys #nil;
+--set difference
+dfHd = #y (Lf.Lxs.Lys.Lac.(Lx.Ly.(#nul xs) ac ((#nul ys) xs ((Lx.Ly.#lt x y) x y (f (#cdr xs) ys (#ins x ac)) ((Lx.Ly.#eq x y) x y (f (#cdr xs) (#cdr ys) ac) (f xs (#cdr ys) ac))))) (#car xs) (#car ys));
+diff = Lxs.Lys.#dfHd xs ys #nil;
+
+
+--Core
+subb = #y (Lf.Lm.Lx.Lval.#casE (#frst val) #cases);
+cases = #cons (#pr #three #varC) (#cons (#pr #two #appC) (#cons (#pr #one #lamC) #nil));
+varC = #eq (#scnd x) (#scnd val) m val;
+appC = #pr #two (#pr (f m x (#frst (#scnd val))) (f m x (#scnd (#scnd val))));
+lamC = #eq (#scnd x) (#frst (#scnd val)) val (#pr #one (#pr (#frst (#scnd val)) (f m x (#scnd (#scnd val)))));
+
+cbV = #y (Lf.Lexp.#casE (#frst exp) #patterns);
+patterns = #cons (#pr #three #varCbv) (#cons (#pr #two #appCbv) (#cons (#pr #one #lamCbv) #nil));
+varCbv = exp;
+lamCbv = exp;
+appCbv = (Lei.(#eq (#frst ei) #one) #lamCase #owCase) (#cbV (#frst (#scnd exp)));
+lamCase = (Leii.#cbV (#subb eii (#pr #three (#frst (#scnd ei))) (#scnd (#scnd ei)))) (#cbV (#scnd (#scnd exp)));
+owCase = (Leii.#pr #two (#pr ei eii)) (#cbV (#scnd (#scnd exp)));
+
 
 --test stuff
 ptrn  = #pr #zero #tr;
 ptrni = #pr #one #fl;
 test  = #casE #zero #tst;
-tst   = #cons #ptrn (#cons #ptrni (#cons #nil));
-lista = #pr #zero (#pr #one (#pr #two #nil));
-listb = #pr #three (#pr #four #nil);
-duplist = #cons #zero (#cons #zero (#cons #one (#cons #one nil)));
+tst   = #cons #ptrn (#cons #ptrni #nil);
+lista = #cons #one (#cons #two #nil);
+listb = #cons #two (#cons #three #nil);
+listc = #cons #two (#cons #three #nil);
+duplist = #cons #zero (#cons #zero (#cons #one (#cons #one #nil)));
 list = #pr #five (#pr #three (#pr #four (#pr #two (#pr #one (#pr #zero (#pr #three (#pr #four (#pr #one (#pr #five (#pr #zero (#pr #two #nil)))))))))));
-listc = #cons #one (#cons #zero (#cons #two #nil));
+lis = #cons #three (#cons #two #nil);
 
 
 ppen = Las.Lb.Lscs.#appnd as (#appnd (#pr b #nil) scs);
@@ -90,10 +112,13 @@ tet = #pr #one (#pr #two (#pr #three (#pr five (#pr #four #nil))));
 tat = #pr #four (#pr #three (#pr #two (#pr #one #nil)));
 tot = #pr #zero (#pr #one (#pr #three (#pr #four #nil)));
 
-mane = #insort #list (#insort #list #nil);
-man  = #insert #list;
+mann = #insort #mane #mane;
 
-setdif = #y (Lxs.Lys.#nul ys xs (f ((#lt (#car xs) (#car ys)) xs (#cdr xs);
+mane = #insort #list (#insort #list #nil);
+man  = #insert #lis;
+
+
+
 
 
 

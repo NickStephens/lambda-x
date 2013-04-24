@@ -18,14 +18,19 @@ type Env = Map.Map String Exp
 --type RC = StateT (Env, Exp) IO
 type RC = State (Env, Exp)
 
+
+
 recode expr = fst$runState (rc expr) (Map.empty, zero)
+
 rc :: Exp -> RC Exp
 rc expr = do
-	x <- enc expr
+	expr' <- enc expr
+	x <- enc expr'
 	let xx = cbv (App cbV x)
 	(env, _) <- get
 	dex <- deco xx
-	return dex
+	dex' <- deco dex 
+	return dex'
 
 
 encode expr = fst $ runState (enc expr) (Map.empty, zero)
