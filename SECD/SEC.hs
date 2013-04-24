@@ -22,7 +22,7 @@ data Oper    = Add | Sub | Mul | Div | Mod deriving (Show, Eq)
 data Rela    = Lt | Gt | Equ deriving (Show, Eq)
 data Instr =
 			ACC Int |
-			CLOS | LETREC | TLETREC |
+			CLOS | LTRC | TLTRC |
 			LET |
 			ENDLET |
 			SEL |
@@ -55,10 +55,10 @@ delta = do
 		LET -> do
 			let v = head s
 			put (s, v:e, c)
-		TLETREC -> do
+		TLTRC -> do
 			let Bl c' = head s
 			put (Cl (c', Bl c':[]):tail s, e, c)
-		LETREC -> do
+		LTRC -> do
 			let Bl c' = head s
 			put (Cl (c',Bl c':e):tail s, e, c)
 		ENDLET -> do
@@ -147,12 +147,12 @@ run p = runtest ([], [], p)
 run' :: Secd ()
 run' = do
 	(s,e,c)  <- get
-	liftIO $ putStrLn ("S: " ++ (show s))
-	liftIO $ putStrLn ("E: " ++ (show e))
-	liftIO $ putStrLn ("C: " ++ (show c))
+--	liftIO $ putStrLn ("S: " ++ (show s))
+--	liftIO $ putStrLn ("E: " ++ (show e))
+--	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
-	liftIO $ putStrLn ""
-	liftIO $ putStrLn ("Instr: " ++ (show$head c)++" ->")
+--	liftIO $ putStrLn ""
+--	liftIO $ putStrLn ("Instr: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
@@ -174,27 +174,27 @@ runtest tp = runErrorT (evalStateT run' tp)
 t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, Op Add]
 cl = [ACC 1, LDC (I 1), Op Add, RTN]
 
-t2   = [fact, LETREC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
+t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
 fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 	BL [ACC 2,RTN],
-	BL [ACC 3, LETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
+	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
-t3   = [fact', TLETREC, NIL, LDC (I 1), CONS, LDC (I 3), CONS, TAP]
+t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 3), CONS, TAP]
 fact' = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 	BL [ACC 2],
-	BL [ACC 3, TLETREC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
 
 
-t4 = [revs, TLETREC, NIL, NIL, CONS, fibbd, TLETREC, NIL, LDC (I 6), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
+t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 20), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
 fibbd = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
 	BL [ACC 1, RTN],
-	BL [ACC 3, TLETREC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
 
 
-t5 = [revs, TLETREC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
+t5 = [revs, TLTRC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
 revs = BL [ACC 1, NULL, SEL,
 	BL [ACC 2],
-	BL [ACC 3, TLETREC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
 
 
 

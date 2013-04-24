@@ -6,11 +6,28 @@ Def -> Name {arg} = Exp
 
 ------------------------------------------
 
-Exp -> App | Lam | Var | Let | Case | Name | (Exp) | Numeric | List
+Exp -> App | Lam | Var | Let | Case | Name | (Exp) |
+		Numeric | List | IfThen | Boolean | Value
 
-List -> [{Int ','} Int] | []
+Value -> Int | Char | Bool
+
+IfThen -> 'If' Boolean 'Then' Exp 'Else' Exp
+
+Bool -> True | False
+
+Boolean -> Boolean BoolOp Boolean | Not Boolean
+
+BoolOp -> '||' | '&&' | '=='
+
+List -> [{Value ','} Value] | [] | 'CAR' List | 'CDR' List | 
 
 Numeric -> Int | Int Oper Int
+
+Int -> ['-'] Num
+
+Num -> { '1' | '2' ... | '9' | '0' }
+
+Char -> ( 'a' | 'b' .. | 'Y' | 'Z' )
 
 Oper -> '+' | '-' | '*' | '/' |
 		'>' | '<' | '==' | '<=' | '>='
