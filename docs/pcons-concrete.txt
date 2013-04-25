@@ -2,12 +2,17 @@ CONCRETE SYNTAX FOR PCONS
 
 Script -> (Def | Exp)+
 
-Def -> Name {arg} = Exp
+Def -> LETF | LETREC
+
+LETF   ->  Name {Arg} '=' Exp 
+LETREC -> 'Letrec' Name {Arg} '=' Exp
 
 ------------------------------------------
 
 Exp -> App | Lam | Var | Let | Case | Name | (Exp) |
 		Numeric | List | IfThen | Boolean | Value
+
+Arg -> Exp
 
 Value -> Int | Char | Bool
 
@@ -19,7 +24,7 @@ Boolean -> Boolean BoolOp Boolean | Not Boolean
 
 BoolOp -> '||' | '&&' | '=='
 
-List -> [{Value ','} Value] | [] | 'CAR' List | 'CDR' List | 
+List -> [{Value ','} Value] | [] | 'CAR' List | 'CDR' List | 'CONS' Value List
 
 Numeric -> Int | Int Oper Int
 
@@ -34,11 +39,13 @@ Oper -> '+' | '-' | '*' | '/' |
 
 App -> Exp Exp
 
-Lam -> L Name . Exp
+Lam -> 'L' Var '.' Exp
 
 Var -> Name
 
-Let -> 'Let' Def 'in' Exp
+Let -> 'Let' Binding 'in' Exp
+
+Binding -> Name '=' Exp
 
 Case -> 'Case' Exp 'of' {Exp '->' Exp}
 
