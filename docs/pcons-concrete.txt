@@ -14,13 +14,25 @@ Exp -> App | Lam | Var | Let | Case | Name | (Exp) |
 
 Arg -> Exp
 
+App -> Exp Exp
+
+Lam -> 'L' Var '.' Exp
+
+Var -> Name
+
+Let -> 'Let' Binding 'in' Exp
+
+Binding -> Name '=' Exp
+
+Case -> 'Case' Exp 'of' {Exp '->' Exp}
+
 Value -> Int | Char | Bool
 
 IfThen -> 'If' Boolean 'Then' Exp 'Else' Exp
 
 Bool -> True | False
 
-Boolean -> Boolean BoolOp Boolean | Not Boolean
+Boolean -> Boolean BoolOp Boolean | 'Not' Boolean
 
 BoolOp -> '||' | '&&' | '=='
 
@@ -36,18 +48,6 @@ Char -> ( 'a' | 'b' .. | 'Y' | 'Z' )
 
 Oper -> '+' | '-' | '*' | '/' |
 		'>' | '<' | '==' | '<=' | '>='
-
-App -> Exp Exp
-
-Lam -> 'L' Var '.' Exp
-
-Var -> Name
-
-Let -> 'Let' Binding 'in' Exp
-
-Binding -> Name '=' Exp
-
-Case -> 'Case' Exp 'of' {Exp '->' Exp}
 
 ==========================================
 
