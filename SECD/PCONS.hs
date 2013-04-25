@@ -1,6 +1,3 @@
-
-
-
 data Def = Def Name Func
 
 data Func = Cl [Exp] Exp | Rec [Exp] Exp
@@ -33,14 +30,3 @@ data Oper = Add | Sub | Mul | Div
 data Value = I Int | C Char | B Bool
 
 data List = Lst [Value]
-
-
-
-
-
-
-
-
-
-
-
