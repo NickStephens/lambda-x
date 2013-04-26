@@ -8,7 +8,7 @@ the SECD virtual machine architecture will be implemented in Haskell, allowing u
 lambda calculus implementation into to SECD instruction set, where lambda calculus programs will be
 runnable.
 
-### Lambda Calculus Parser &larr; Written in Haskell
+### Lambda Calculus Parser (dot-lam) &larr; Written in Haskell
 
 #### Concrete Syntax:
 module &rarr; 'module' alpha '\n' 

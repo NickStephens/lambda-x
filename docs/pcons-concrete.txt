@@ -23,14 +23,15 @@ Case -> 'Case' Exp 'of' {Exp '->' Exp}
 
 ======== Sugar ========
 
-BinSugar -> Exp (Name | Lam | Oper) Exp 
+BinSugar -> Exp (Oper) Exp 
 
 ======== Constants (Impure) =========
 
-Value -> Int | Char | Bool
+Value -> Int | Char | Bool | Pair | List
 
-List -> [{Value ','} Value] | [] 
+Pair -> (Exp, Exp)
 
+List -> [{Exp ','} Exp] | [] 
 
 Num -> Digit+ ['.' Digit+] | '.' Digit+
 
@@ -47,3 +48,5 @@ Oper -> '+' | '-' | '*' | '/' |
 Digit -> { '1' | '2' ... | '9' | '0' }
 
 Name -> Char+
+
+App (App (+) Exp) Exp
