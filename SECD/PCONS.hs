@@ -1,32 +1,32 @@
-data Def = Def Name Func
+data Def = Def Name Func deriving (Show, Eq, Ord)
 
-data Func = Cl [Exp] Exp | Rec [Exp] Exp
+data Func = Cl [Expr] Expr | Rec [Expr] Expr deriving (Show, Eq, Ord)
 
-data Exp = EA App | EL Lam | EV Var | ELT Let | EC Case |
-			EM Numeric | ELS List | ECND IfThen | EB Boolean | EVL Value
+data Expr = EA App | EL Lam | EV Var | ELT Let | EC Case |
+			EM Numeric | ELS List | ECND IfThen | EB Boolean | EVL Value deriving (Show, Eq, Ord)
 
-data App = Ap Exp Exp
+data App = Ap Expr Expr deriving (Show, Eq, Ord)
 
-data Lam = Lm Var Exp
+data Lam = Lm Var Expr deriving (Show, Eq, Ord)
 
-data Var = Vr Name
+data Var = Vr Name deriving (Show, Eq, Ord)
 
 type Name = String
 
-data Let = Let Name Exp Exp
+data Let = Let Name Expr Expr deriving (Show, Eq, Ord)
 
-data IfThen = Cond Exp Exp Exp
+data IfThen = Cond Expr Expr Expr deriving (Show, Eq, Ord)
 
-data Case = Cs Exp [(Exp, Exp)]
+data Case = Cs Expr [(Expr, Expr)] deriving (Show, Eq, Ord)
 
-data Boolean = Bl BoolOp Value Value
+data Boolean = Bl BoolOp Value Value deriving (Show, Eq, Ord)
 
-data BoolOp = And | Or
+data BoolOp = And | Or deriving (Show, Eq, Ord)
 
-data Numeric = Nu Oper Value Value
+data Numeric = Nu Oper Value Value deriving (Show, Eq, Ord)
 
-data Oper = Add | Sub | Mul | Div
+data Oper = Add | Sub | Mul | Div deriving (Show, Eq, Ord)
 
-data Value = I Int | C Char | B Bool
+data Value = I Int | C Char | B Bool deriving (Show, Eq, Ord)
 
-data List = Lst [Value]
+data List = Lst [Value] deriving (Show, Eq, Ord)
