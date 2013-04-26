@@ -10,7 +10,7 @@ type Code   = [Instr]
 type Dump    = [Store]
 data Store   = BRT [Instr] | Call (Scratch, Env, Code) deriving Show
 
-type Moment  = (Scratch, Env, Code)
+type Continuation  = (Scratch, Env, Code)
 
 data Value   = I Integer | L [Value] | Cl Closure | B Bool | E Env | Bl Block deriving Eq
 type Var     = String
@@ -136,8 +136,8 @@ appR rel i i'
 	|rel == Gt = B $i > i'
 	|rel == Equ = B $ i == i'
 
---type Secd = ErrorT String (StateT Moment IO)
-type Secd = StateT Moment (ErrorT String IO)
+--type Secd = ErrorT String (StateT Continuation IO)
+type Secd = StateT Continuation (ErrorT String IO)
 
 run p = runtest ([], [], p)
 
@@ -193,7 +193,10 @@ revs = BL [ACC 1, NULL, SEL,
 	BL [ACC 2],
 	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
 
-
+t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
+fibe = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
+	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
 
 --Stack operations
 
