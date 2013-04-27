@@ -1,32 +1,28 @@
-data Def = Def Name Func deriving (Show, Eq, Ord)
+-- Abstract Syntax for PCONS
 
-data Func = Cl [Expr] Expr | Rec [Expr] Expr deriving (Show, Eq, Ord)
 
-data Expr = EA App | EL Lam | EV Var | ELT Let | EC Case |
-			EM Numeric | ELS List | ECND IfThen | EB Boolean | EVL Value deriving (Show, Eq, Ord)
+data Def = Def Name Func
+		deriving (Show, Eq, Ord)
 
-data App = Ap Expr Expr deriving (Show, Eq, Ord)
+data Func = Cl Args Expr | Rec Args Expr
+		deriving (Show, Eq, Ord)
 
-data Lam = Lm Var Expr deriving (Show, Eq, Ord)
+type Args = [Expr]
 
-data Var = Vr Name deriving (Show, Eq, Ord)
+data Expr = App Expr Expr | Lam Name Expr | Var Name | Let Name Expr Expr |
+			Case Expr [(Expr, Expr)] | Cond Expr Expr Expr | UnOp Oper Expr |
+			BinOp Oper Expr Expr | Val Value | Lst [Expr]
+				deriving (Show, Eq, Ord)
 
 type Name = String
 
-data Let = Let Name Expr Expr deriving (Show, Eq, Ord)
+data Oper = Add | Sub | Mul | Div | Not |
+		deriving (Show, Eq, Ord)
 
-data IfThen = Cond Expr Expr Expr deriving (Show, Eq, Ord)
+data Value = F Float | I Int | C Char | B Bool
+		deriving (Show, Eq, Ord)
 
-data Case = Cs Expr [(Expr, Expr)] deriving (Show, Eq, Ord)
 
-data Boolean = Bl BoolOp Value Value deriving (Show, Eq, Ord)
 
-data BoolOp = And | Or deriving (Show, Eq, Ord)
 
-data Numeric = Nu Oper Value Value deriving (Show, Eq, Ord)
 
-data Oper = Add | Sub | Mul | Div deriving (Show, Eq, Ord)
-
-data Value = I Int | C Char | B Bool deriving (Show, Eq, Ord)
-
-data List = Lst [Value] deriving (Show, Eq, Ord)
