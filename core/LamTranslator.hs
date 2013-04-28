@@ -106,3 +106,5 @@ translate file = do
 	writeFile outputName code
 	return $ "produced " ++ outputName
 	where outputName = (takeWhile (/= '.') file) ++ ".hs"
+
+main = translate

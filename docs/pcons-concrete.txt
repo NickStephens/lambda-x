@@ -1,11 +1,12 @@
 CONCRETE SYNTAX FOR PCONS
 
-Script -> (Def | Exp)+
+Script -> Def+
 
 Def -> LETF | LETREC
 
 LETF   ->  Name {Arg} '=' Exp 
 LETREC -> 'Letrec' Name {Arg} '=' Exp
+TLETREC -> 'TLetrec' Name {Arg} '=' Exp
 
 -------- Purity --------
 
