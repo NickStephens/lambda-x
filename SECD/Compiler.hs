@@ -49,11 +49,11 @@ comp expr = case expr of
 		e1' <- comp e1
 		e2' <- comp e2
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
+--	Lst xs -> do
+--		xs' <- mapM comp xs
+--		let ls = concat xs'
+--		return $ [LDC (L ls)]
 	Nil -> return [NIL]
-	Lst xs -> do
-		xs' <- mapM comp xs
-		let ls = concat xs'
-		return $ [LDC (L ls)]
 	Car e -> do
 		ce <- comp e
 		return $ ce ++ [CAR]
@@ -64,8 +64,27 @@ comp expr = case expr of
 		ce1 <- comp e1
 		ce2 <- comp e2
 		return $ ce2 ++ ce1 ++ [CONS]
+	Def nm ps e -> do
+		modify (\(e,n) -> (e,1))
+		params ps
+		ce <- comp e
+		return $ ce
+	Clo e -> do
+		ce <- comp e
+		return $ [BL (ce ++ [RTN]), CLOS]
+	Rec e -> do
+		ce <- comp e
+		return $ [BL (ce ++ [RTN]), LTRC]
+	TRec e -> do
+		ce <- comp e
+		return $ [BL ce, TLTRC]
 
 
+
+params [] = return ()
+params (p:ps)= do
+	modify $ \(env, vn) -> (Map.insert p vn env, vn+1)
+	params ps
 
 
 runt p = let p' = compile p in runtest ([], [], p')
