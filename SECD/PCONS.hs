@@ -1,27 +1,24 @@
 -- Abstract Syntax for PCONS
 module PCONS where
 
-import SEC
+import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ))
 
 type Script = [Def]
 
-data Def = Def Name AFunc
-		deriving (Show, Eq, Ord)
-
-data AFunc = Cl Args Expr | Rec Args Expr | TRec Args Expr
+data Def = Def Name Expr
 		deriving (Show, Eq, Ord)
 
 type Args = [Expr]
 
-data Expr = App Expr Expr | Lam Expr | Var Name | Let Name Expr Expr |
-			Case Expr [(Expr, Expr)] | Cond Expr Expr Expr | UnOp Oper Expr |
-			BinOp Oper Expr Expr | Val AVal | Lst [Expr]
+data Expr = 
+		App Expr Expr | Lam Expr | Var Name | Let Name Expr Expr |
+		Case Expr [(Expr, Expr)] | Cond Expr Expr Expr | UnOp Oper Expr |
+		BinOp Oper Expr Expr | Val AVal | Lst [Expr] | Nil | Cdr Expr | Car Expr | Cons Expr Expr |
+		Cl Args Expr | Rec Args Expr | TRec Args Expr
 				deriving (Show, Eq, Ord)
 
 type Name = String
 
---data Oper = Add | Sub | Mul | Div | Mod | Not | Neg
---		deriving (Show, Eq, Ord)
 
 data AVal = AF Float | AI Int | AC Char | AB Bool
 		deriving (Show, Eq, Ord)
@@ -32,6 +29,8 @@ fac = App (App (Var "fac") (App (App (Lam (Lam (BinOp Mul (Var "a") (Var "n"))))
 		(App (Lam (BinOp Sub (Var "a") (Val$AI 1))) (Var "x"))
 
 ts1 = App (Lam (App (Lam (BinOp Add (BinOp Mul (Var "n") (Var "m")) (Var "m"))) (Val$AI 2))) (Val$AI 3)
+
+ts2 = App (Lam (Car (Var "x"))) (Lst [ts1])
 
 ts3 = App (Lam (BinOp Mul (Var "x") (Val$AI 2)))
 	(App (Lam (BinOp Add (Var "x") (Val$AI 2)))
@@ -44,3 +43,6 @@ ts4 = Cond (App (Lam (BinOp Lt (Var "x") (Val$AI 3))) (Val$AI 2)) ts1 ts3
 
 ts5 = Let "t" (Val$AI 2) (Cond (App (Lam (BinOp Lt (Var "x") (Val$AI 3))) (Var "t")) ts1 ts3)
 
+ts6 = App (Lam (BinOp Add (Var "n") (Val$AI 2))) (App (Lam (Car (Var "x"))) (Lst [ts1]))
+
+em = App (Lam (App (Lam (Cons (Var "x") (Var "y"))) (Val$AI 3))) Nil

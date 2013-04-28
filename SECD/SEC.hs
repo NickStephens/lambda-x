@@ -4,26 +4,22 @@ import qualified Data.Map as Map
 import Control.Monad.State
 import Control.Monad.Error
 
-type Scratch = [Value]
-type Env     = [Value]
-type Code   = [Instr]
-type Dump    = [Store]
-data Store   = BRT [Instr] | Call (Scratch, Env, Code) deriving Show
+type Scratch = [Code]
+type Env     = [Code]
+type CodeS   = [Code]
 
-type Continuation  = (Scratch, Env, Code)
 
-data Value   = I Int | F Float | L [Value] | Cl Closure | B Bool |
-		E Env | Bl Block | C Char
-			deriving Eq
+type Continuation  = (Scratch, Env, CodeS)
+
+
 type Var     = String
 type Closure = (Func, Env)
 type Const   = Integer
-type Block   = [Instr]
-type Func    = [Instr]
+type Block   = [Code]
+type Func    = [Code]
 data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ
 		deriving (Show, Eq, Ord)
-data Rela    = Rat deriving (Show, Eq) -- Lt | Gt | Equ deriving (Show, Eq)
-data Instr =
+data Code =
 			ACC Int |
 			CLOS | LTRC | TLTRC |
 			LET |
@@ -32,20 +28,21 @@ data Instr =
 			BL Block | --load func
 			APP | TAP |
 			RTN |
-			LDC Value |
+			LDC Code |
 			Op Oper |
-			Rel Rela |
-			NIL | CONS | CAR | CDR | NULL deriving (Eq, Show)
-			
-
-
-instance Show Value where
+			NIL | CONS | CAR | CDR | NULL |
+			I Int | F Float | L [Code] | Cl Closure | B Bool |
+			E Env | Bl Block | C Char 
+				deriving (Eq, Show)
+{-
+instance Show Code where
 	show (I i) = show i
 	show (L v) = show v
 	show (Cl (f, e)) = "Cl ("++show f++", "++show e
 	show (B b) = show b
 	show (E env) = show env
 	show (Bl block) = "Bl "++show block
+-}
 
 delta :: Secd ()
 delta = do
@@ -89,9 +86,6 @@ delta = do
 		Op op -> do
 			rslt <- oper op s
 			put (rslt:((tail . tail) s), e, c) --pop two operands off S
---		Rel rel -> do
---			rslt <- rela rel s
---			put (rslt:((tail . tail) s), e, c) --pop two operands off S
 		CONS -> do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
@@ -110,7 +104,7 @@ delta = do
 			put (L []:s, e, c)
 
 
---oper :: Oper -> Scratch -> Secd Value
+oper :: Oper -> Scratch -> Secd Code
 oper op s
 	|length s < 2 = throwError "not enough values on stack to operate on"
 	|otherwise = case head s of
@@ -142,7 +136,6 @@ appR rel i i'
 	|rel == Gt = B $i > i'
 	|rel == Equ = B $ i == i'
 
---type Secd = ErrorT String (StateT Continuation IO)
 type Secd = StateT Continuation (ErrorT String IO)
 
 run p = runtest ([], [], p)
@@ -155,7 +148,7 @@ run' = do
 	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
 	liftIO $ putStrLn ""
-	liftIO $ putStrLn ("Instr: " ++ (show$head c)++" ->")
+	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
@@ -171,7 +164,7 @@ displayEnv e = do
 		else do
 			liftIO $ putStrLn ("   "++ show e)
 			displayEnv $tail e
---runtest tp = evalStateT (runErrorT run') tp
+
 runtest tp = runErrorT (evalStateT run' tp)
 
 
@@ -179,13 +172,13 @@ t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
 fact' = BL [ACC 1, LDC (I 1), Op Equ, SEL,
 	BL [ACC 2],
 	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
-{-
+
 
 t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, Op Add]
 cl = [ACC 1, LDC (I 1), Op Add, RTN]
 
 t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
-fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
+fact = BL [ACC 1, LDC (I 1), Op Equ, SEL,
 	BL [ACC 2,RTN],
 	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
@@ -193,7 +186,7 @@ fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 
 
 t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
-fibbd = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+fibbd = BL [ACC 2, LDC (I 0), Op Equ, SEL,
 	BL [ACC 1, RTN],
 	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
 
@@ -204,13 +197,13 @@ revs = BL [ACC 1, NULL, SEL,
 	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
 
 t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
-fibe = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+fibe = BL [ACC 2, LDC (I 0), Op Equ, SEL,
 	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
 	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
--}
+
 --Stack operations
 
-pushS :: Value -> Secd ()
+pushS :: Code -> Secd ()
 pushS v = do
 	(s, e, c) <- get
 	put (v:s, e, c)
@@ -222,13 +215,13 @@ popS = do
 	put (tail s, e, c)
 	return ()
 
-topS :: Secd Value
+topS :: Secd Code
 topS = do
 	(s, e, c) <- get
 	put (tail s, e, c)
 	return $ head s
 
-topC :: Secd Instr
+topC :: Secd Code
 topC = do
 	(s, e, c) <- get
 	put (s, e, tail c)
@@ -241,10 +234,4 @@ popE = do
 	return ()
 
 
-{-
 
-[L [L [I 2,I 1],L []],Cl ([ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]],[Bl [ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]]])]
-
-
-
--}

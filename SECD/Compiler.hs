@@ -2,14 +2,14 @@ import PCONS
 import SEC
 import qualified Data.Map as Map
 import Control.Monad.State
-import Data.Maybe
+--import Data.Maybe
 
 type Scope = Map.Map String Int
 type CP = State (Scope, Int)
 --compile :: Expr -> [Instr]
 compile expr = fst$runState (comp expr) (Map.empty, 1)
 
-comp :: Expr -> CP [Instr]
+comp :: Expr -> CP [Code]
 comp expr = case expr of
 	Lam e -> do
 		e' <- comp e
@@ -31,6 +31,9 @@ comp expr = case expr of
 		ce1 <- comp e1
 		ce2 <- comp e2
 		return $ ce1 ++ ce2 ++ [Op op]
+--	UnOp op e -> do
+--		ce <- comp e
+--		return $ 
 	Val v -> case v of
 		AF f -> return [LDC (F f)]
 		AI i -> return [LDC (I i)]
@@ -46,11 +49,26 @@ comp expr = case expr of
 		e1' <- comp e1
 		e2' <- comp e2
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
-		
+	Nil -> return [NIL]
+	Lst xs -> do
+		xs' <- mapM comp xs
+		let ls = concat xs'
+		return $ [LDC (L ls)]
+	Car e -> do
+		ce <- comp e
+		return $ ce ++ [CAR]
+	Cdr e -> do
+		ce <- comp e
+		return $ ce ++ [CDR]
+	Cons e1 e2 -> do
+		ce1 <- comp e1
+		ce2 <- comp e2
+		return $ ce2 ++ ce1 ++ [CONS]
 
 
 
 
+runt p = let p' = compile p in runtest ([], [], p')
 
 
 
