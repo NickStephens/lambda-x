@@ -1,4 +1,4 @@
-module SECD where
+module SEC where
 
 import qualified Data.Map as Map
 import Control.Monad.State
@@ -12,14 +12,17 @@ data Store   = BRT [Instr] | Call (Scratch, Env, Code) deriving Show
 
 type Continuation  = (Scratch, Env, Code)
 
-data Value   = I Integer | L [Value] | Cl Closure | B Bool | E Env | Bl Block deriving Eq
+data Value   = I Int | F Float | L [Value] | Cl Closure | B Bool |
+		E Env | Bl Block | C Char
+			deriving Eq
 type Var     = String
 type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Instr]
 type Func    = [Instr]
-data Oper    = Add | Sub | Mul | Div | Mod deriving (Show, Eq)
-data Rela    = Lt | Gt | Equ deriving (Show, Eq)
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ
+		deriving (Show, Eq, Ord)
+data Rela    = Rat deriving (Show, Eq) -- Lt | Gt | Equ deriving (Show, Eq)
 data Instr =
 			ACC Int |
 			CLOS | LTRC | TLTRC |
@@ -39,7 +42,7 @@ data Instr =
 instance Show Value where
 	show (I i) = show i
 	show (L v) = show v
-	show (Cl (f, e)) = "Cl ("++show f++",env)"
+	show (Cl (f, e)) = "Cl ("++show f++", "++show e
 	show (B b) = show b
 	show (E env) = show env
 	show (Bl block) = "Bl "++show block
@@ -54,7 +57,7 @@ delta = do
 			put (e!!(n-1):s, e, c)
 		LET -> do
 			let v = head s
-			put (s, v:e, c)
+			put (tail s, v:e, c)
 		TLTRC -> do
 			let Bl c' = head s
 			put (Cl (c', Bl c':[]):tail s, e, c)
@@ -86,9 +89,9 @@ delta = do
 		Op op -> do
 			rslt <- oper op s
 			put (rslt:((tail . tail) s), e, c) --pop two operands off S
-		Rel rel -> do
-			rslt <- rela rel s
-			put (rslt:((tail . tail) s), e, c) --pop two operands off S
+--		Rel rel -> do
+--			rslt <- rela rel s
+--			put (rslt:((tail . tail) s), e, c) --pop two operands off S
 		CONS -> do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
@@ -122,6 +125,9 @@ appO op i i'
 	|op == Mul = I $ i * i'
 	|op == Div = I $ i `div` i'
 	|op == Mod = I $ i `mod` i'
+	|op == Lt = B $ i < i'
+	|op == Gt = B $i > i'
+	|op == Equ = B $ i == i'
 
 rela rel s
 	|length s < 2 = throwError "not enough values on stack to operate on"
@@ -168,6 +174,13 @@ displayEnv e = do
 --runtest tp = evalStateT (runErrorT run') tp
 runtest tp = runErrorT (evalStateT run' tp)
 
+
+t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
+fact' = BL [ACC 1, LDC (I 1), Op Equ, SEL,
+	BL [ACC 2],
+	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+{-
+
 t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, Op Add]
 cl = [ACC 1, LDC (I 1), Op Add, RTN]
 
@@ -176,10 +189,7 @@ fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
 	BL [ACC 2,RTN],
 	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
-t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
-fact' = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
-	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+
 
 
 t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
@@ -197,7 +207,7 @@ t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CON
 fibe = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
 	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
 	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
-
+-}
 --Stack operations
 
 pushS :: Value -> Secd ()
