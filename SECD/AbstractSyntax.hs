@@ -13,7 +13,7 @@ data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 
 data Operator = ADD | SUB | MUL | DIV |
 		LT | GT | ELT | EGT | EQ | NEQ |	
-		CDR | CAR | NUL 
+		CDR | CAR | CONS 
 		deriving (Show, Eq)
 
 data Pattern  = List (Name, Name) | Pair (Name, Name)
