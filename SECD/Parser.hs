@@ -1,63 +1,64 @@
 module Parser where 
 
 import Prelude hiding (LT, GT, EQ, div)
+import qualified Data.Map as Map
 import AbstractSyntax 
 import Text.ParserCombinators.Parsec
+import qualified Text.Parsec.Token as T
+import Text.Parsec.Language ( haskellDef )
 
-{-
-script :: GenParser Char s Script
-script = do
-		many1 def
--}
+lexer = T.makeTokenParser (haskellDef)
 
-{- 
-defwrap :: GenParser Char s (String, [String], Expr)
-defwrap = do
-	name <- identifier
+identifier = T.identifier lexer
+lexeme = T.identifier lexer
+whiteSpace = T.whiteSpace lexer
+symbol = T.symbol lexer
+natural = T.natural lexer
+semi = T.semi lexer
+reserved = T.reserved lexer
+reservedOp = T.reservedOp lexer
+
+
+{- BINARY SUGAR -}
+
+binary = do
+	many space
+	op <- operator 
+	many space
+	return (\e1 -> \e2 -> (App (App op e1) e2))
+
+{- EXPRESSION -}
+expression :: Parser Expr
+expression = chainl1 term binary
+
+term = (chainl1 (variable <|> lambda 
+			<|> operator <|> parexpression) application)
+
+
+{- PARENTHESIZED EXPRESSION -}
+parexpression :: Parser Expr
+parexpression = do
+	between (symbol "(") (symbol ")") expression
+
+{- APPLICATION -}
+application = do
 	many1 space
-	params <- sepBy arg (char (many1 space))
-	char '='
-	many1 space
-	exp <- expression
-	return $ Def name params expression
--}
+	return App
 
-{-
-letrec :: GenParser Char s Def
-letrec = do
-	string "Letrec"
-	(name, params, expression) <- defwrap
-	return $ Def name (Rec params expression)
--}
-
-{-
-tletrec = do
-	string "Tletrec"
-	(name, params, expr) <- defwrap
-	return $ Def name (TRec params expr)
--}
-
-{-
-expression = <|> <?> "expression"
--}
-
-{-
+{- LAMBDA ABSTRACTION -}
 lambda = do
-	char 'L'
-	many space
+	symbol "\\"
 	name <- identifier
-	many space 
-	char '.'
-	many space
-	expr <- expression		
-	return $ Lam name expr
--}
+	symbol "."
+	test <- expression 
+	return $ Lam name test
 
-{-
-var = do
-	name <- identifier
-	return $ Var name
--}
+{- VARIABLE -}
+
+variable = do
+	head <- letter
+	tail <- many alphaNum	
+	return $ Var (head:tail)
 
 {- OPERATORS -}
 
@@ -67,7 +68,7 @@ operator = do
 	<|> try (car) <|> try (cdr) <|> try (cons) <?> "operator"
 
 -- ARITHMENTIC OPERATORS
-add :: GenParser Char st (Expr)
+add :: Parser Expr
 add = do
 	char '+'
 	return $ Op ADD
@@ -139,3 +140,5 @@ cons :: GenParser Char st (Expr)
 cons = do
 	string "cons"
 	return $ Op CONS 
+
+{- INTERMEDIATE PARSING -}
