@@ -1,6 +1,6 @@
 CONCRETE SYNTAX FOR PCONS
 
-Script -> Def+
+Program -> Def+
 
 Def -> LETF | LETREC
 

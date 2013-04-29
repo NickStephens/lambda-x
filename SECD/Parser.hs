@@ -18,9 +18,7 @@ semi = T.semi lexer
 reserved = T.reserved lexer
 reservedOp = T.reservedOp lexer
 
-
 {- BINARY SUGAR -}
-
 binary = do
 	many space
 	op <- operator 
@@ -33,7 +31,6 @@ expression = chainl1 term binary
 
 term = (chainl1 (variable <|> lambda 
 			<|> operator <|> parexpression) application)
-
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression :: Parser Expr
@@ -56,9 +53,8 @@ lambda = do
 {- VARIABLE -}
 
 variable = do
-	head <- letter
-	tail <- many alphaNum	
-	return $ Var (head:tail)
+	nm <- name
+	return $ Var nm
 
 {- OPERATORS -}
 
@@ -142,3 +138,8 @@ cons = do
 	return $ Op CONS 
 
 {- INTERMEDIATE PARSING -}
+name :: Parser Name
+name = do
+	head <- letter
+	tail <- many alphaNum
+	return (head:tail)
