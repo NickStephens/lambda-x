@@ -3,7 +3,7 @@ module AbstractSyntax where
 data Program  = Program [Alias]
 
 type Name     = String
-data Alias    = Def Name [Name] Expr
+data Alias    = Alias Name [Name] Expr
 		deriving (Show, Eq)
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
