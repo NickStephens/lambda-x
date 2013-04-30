@@ -21,27 +21,28 @@ data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
-			CLOS | LTRC | TLTRC |
+			CLOS | LTRC | TLTRC | STOS Block |
 			LET |
 			ENDLET |
 			SEL |
 			BL Block | --load func
-			APP | TAP |
+			RC Block |
+			APP | TAP | RAP |
 			RTN |
 			LDC Code |
 			Op Oper |
 			NIL | CONS | CAR | CDR | NULL |
-			I Int | F Float | L [Code] | Cl Closure | B Bool |
-			E Env | Bl Block | C Char 
+			I Int | F Float | L [Code] | CL Closure | B Bool |
+			E Env | C Char 
 				deriving (Eq, Show)
 {-
 instance Show Code where
 	show (I i) = show i
 	show (L v) = show v
-	show (Cl (f, e)) = "Cl ("++show f++", "++show e
+	show (CL (f, e)) = "CL ("++show f++", "++show e
 	show (B b) = show b
 	show (E env) = show env
-	show (Bl block) = "Bl "++show block
+	show (BL block) = "BL "++show block
 -}
 
 delta :: Secd ()
@@ -56,11 +57,11 @@ delta = do
 			let v = head s
 			put (tail s, v:e, c)
 		TLTRC -> do
-			let Bl c' = head s
-			put (Cl (c', Bl c':[]):tail s, e, c)
+			let BL c' = head s
+			put (CL (c', BL c':[]):tail s, e, c)
 		LTRC -> do
-			let Bl c' = head s
-			put (Cl (c',Bl c':e):tail s, e, c)
+			let CL (c', _) = head s
+			put (CL (c',BL c':e):tail s, e, c)
 		ENDLET -> do
 			popE
 		SEL -> do
@@ -70,18 +71,15 @@ delta = do
 				True  -> put (tail s, e, btr++cs)
 				False -> put (tail s, e, bfl++cs)
 		BL bl -> do
-			put (Bl bl:s, e, c)
+			put (BL bl:s, e, c)
 		CLOS -> do
-			let Bl c' = head s
-			put (Cl (c',e):tail s, e, c)
+			let BL c' = head s
+			put (CL (c',e):tail s, e, c)
 		APP -> do
-	 		let (L v:Cl (c',e'):rest) = s
-			put (Bl c:E e:rest, v++e', c')
-		TAP -> do
-			let (L v:Cl (c',e'):rest) = s
-			put (rest, v++e', c')
+	 		let (L v:CL (c',e'):rest) = s
+			put (BL c:E e:rest, v++e', c')
 		RTN -> do
-			let (v:Bl c':E e':rest) = s
+			let (v:BL c':E e':rest) = s
 			put (v:rest, e', c')
 		Op op -> do
 			rslt <- oper op s
@@ -102,6 +100,17 @@ delta = do
 				else put (B False:tail s, e, c)
 		NIL -> do
 			put (L []:s, e, c)
+		RC c' -> do
+			put (s, RC c':e, c'++c)
+		RAP -> do
+			let (L as:rest) = s
+			let (RC c':e')  = e
+			put (BL c:E e':rest, RC c':as, c')
+		TAP -> do
+			let (L as:rest) = s
+			let (RC c':e')  = e
+			put (rest, RC c':as, c')
+
 
 
 oper :: Oper -> Scratch -> Secd Code
@@ -114,11 +123,11 @@ oper op s
 		_   -> throwError "first arg not an int"
 
 appO op i i'
-	|op == Add = I $ i + i'
-	|op == Sub = I $ i - i'
-	|op == Mul = I $ i * i'
-	|op == Div = I $ i `div` i'
-	|op == Mod = I $ i `mod` i'
+	|op == Add = I $ i' + i
+	|op == Sub = I $ i' - i
+	|op == Mul = I $ i' * i
+	|op == Div = I $ i' `div` i
+	|op == Mod = I $ i' `mod` i
 	|op == Lt = B $ i < i'
 	|op == Gt = B $i > i'
 	|op == Equ = B $ i == i'

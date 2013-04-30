@@ -2,7 +2,7 @@ import PCONS
 import SEC
 import qualified Data.Map as Map
 import Control.Monad.State
---import Data.Maybe
+import Data.List
 
 type Scope = Map.Map String Int
 type CP = State (Scope, Int)
@@ -13,20 +13,22 @@ comp :: Expr -> CP [Code]
 comp expr = case expr of
 	Lam e -> do
 		e' <- comp e
-		return $ [BL (e' ++ [RTN]),CLOS]
+		return [BL (e' ++ [RTN]),CLOS]
 	App f v -> do
 		modify (\(e,n) -> (e,1))
-		cf <- comp f
-		cv <- comp v
-		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
+		cf <- comp f --BL;CLOS
+		cv <- comp v --LD
+		case head cv of
+			NIL -> return $ cf ++ cv ++ [APP]
+			_   -> return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Var x -> do
 		(env, vn) <- get
 		case Map.lookup x env of
 			Nothing -> do
 				put $ (Map.insert x vn env, vn+1)
-				return $ [ACC vn]
+				return [ACC vn]
 			Just v -> do
-				return $ [ACC v]
+				return [ACC v]
 	BinOp op e1 e2 -> do
 		ce1 <- comp e1
 		ce2 <- comp e2
@@ -49,10 +51,10 @@ comp expr = case expr of
 		e1' <- comp e1
 		e2' <- comp e2
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
---	Lst xs -> do
---		xs' <- mapM comp xs
---		let ls = concat xs'
---		return $ [LDC (L ls)]
+	CLst xs -> do
+		xs' <- mapM comp xs
+		let ls = concat $ intersperse [CONS] xs'
+		return ls
 	Nil -> return [NIL]
 	Car e -> do
 		ce <- comp e
@@ -65,21 +67,27 @@ comp expr = case expr of
 		ce2 <- comp e2
 		return $ ce2 ++ ce1 ++ [CONS]
 	Def nm ps e -> do
-		modify (\(e,n) -> (e,1))
+		modify (\(e, _) -> (e,1))
+		modify $ \(e, v) -> (Map.insert nm v e, v+1)
 		params ps
 		ce <- comp e
-		return $ ce
-	Clo e -> do
-		ce <- comp e
-		return $ [BL (ce ++ [RTN]), CLOS]
-	Rec e -> do
-		ce <- comp e
-		return $ [BL (ce ++ [RTN]), LTRC]
-	TRec e -> do
-		ce <- comp e
-		return $ [BL ce, TLTRC]
+		return ce
 
 
+	RCL pred th el -> do
+		p <- comp pred
+		trm <- comp th
+		cnt <- comp el
+		return [BL [RC (p++[SEL]++trm++cnt)],CLOS]
+	TRM e -> do
+		ce <- comp e
+		return [BL (ce++[RTN])]
+	CNT e -> do
+		ce <- comp e
+		return [BL (ce++[RAP,RTN])]
+	TNT e -> do
+		ce <- comp e
+		return [BL (ce++[TAP])]
 
 params [] = return ()
 params (p:ps)= do
