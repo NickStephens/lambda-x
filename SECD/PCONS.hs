@@ -13,7 +13,7 @@ data Expr =
 
 		CLst [Expr] | Nil | Cdr Expr | Car Expr | Cons Expr Expr |
 
-		Def Name Params Expr | Clo Expr | Rec Name | 
+		Def Name Params Expr | RDef Name Params Expr | Clo Expr | Rec Name | 
 
 		TRM Expr | TRCL Expr Expr Expr | RCL Expr Expr Expr | CNT Expr | TNT Expr
 
@@ -47,7 +47,7 @@ ts8 = App (Lam (App (Lam (App func (Val$AI 5))) (Val$AI 4))) (Val$AI 3)
 
 func = Def "func" ["x", "y", "z"] (Lam (BinOp Sub (Var "x") (BinOp Sub (Var "y") (Var "z"))))
 
-pfunc = Def "pf" ["c", "a"]
+pfunc = RDef "pf" ["c", "a"]
 	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
 	(TRM (Var "a"))
 	(CNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )
@@ -55,7 +55,7 @@ pfunc = Def "pf" ["c", "a"]
 fract = App (Lam (App pfunc (Val$AI 6))) (Val$AI 1)
 
 
-tfunc = Def "pf" ["c", "a"]
+tfunc = RDef "pf" ["c", "a"]
 	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
 	(TRM (Var "a"))
 	(TNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )

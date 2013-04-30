@@ -18,9 +18,7 @@ comp expr = case expr of
 		modify (\(e,n) -> (e,1))
 		cf <- comp f --BL;CLOS
 		cv <- comp v --LD
-		case head cv of
-			NIL -> return $ cf ++ cv ++ [APP]
-			_   -> return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
+		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Var x -> do
 		(env, vn) <- get
 		case Map.lookup x env of
@@ -67,6 +65,12 @@ comp expr = case expr of
 		ce2 <- comp e2
 		return $ ce2 ++ ce1 ++ [CONS]
 	Def nm ps e -> do
+		modify (\(e, _) -> (e,1))
+		params ps
+		modify $ \(e, v) -> (Map.insert nm v e, v+1)
+		ce <- comp e
+		return ce
+	RDef nm ps e -> do
 		modify (\(e, _) -> (e,1))
 		modify $ \(e, v) -> (Map.insert nm v e, v+1)
 		params ps
