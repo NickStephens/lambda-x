@@ -37,11 +37,18 @@ binary = do
 	return (\e1 -> \e2 -> (App (App op e1) e2))
 
 {- EXPRESSION -}
+-- binary sugar and operator application has higher precedence
+
+
 expression :: Parser Expr
-expression = term `chainl1` binary
+expression = term `chainl1` application
+
+factor = chainl1 (variable <|> lambda 
+			<|> operator <|> parexpression) application
 
 term = (chainl1 (variable <|> lambda 
-			<|> operator <|> parexpression) application)
+			<|> operator <|> parexpression) (binary)) <|> factor  
+
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression :: Parser Expr
@@ -50,7 +57,7 @@ parexpression = do
 
 {- APPLICATION -}
 application = do
-	char ' '	
+	many1 space
 	return App
 
 {- LAMBDA ABSTRACTION -}
@@ -70,9 +77,21 @@ variable = do
 {- OPERATORS -}
 
 operator = do
+	relop <|> addop <|> mulop <|> listop <?> "operator"
+
+
+relop = do
 	try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> try (neq)
-	<|> add <|> sub <|> mul <|> div
-	<|> try (car) <|> try (cdr) <|> try (cons) <?> "operator"
+	<?> "relational operator"
+
+listop = do
+	try(cons) <|> try (car) <|> cdr <?> "list operator"
+
+addop = do
+	add <|> sub <?> "addition operator"
+
+mulop = do
+	mul <|> div <?> "multiplicative operator"
 
 -- ARITHMENTIC OPERATORS
 add :: Parser Expr
