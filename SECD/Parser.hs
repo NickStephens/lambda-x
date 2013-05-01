@@ -15,7 +15,10 @@ main file = do
 {- PROGRAM -}
 
 program :: Parser Program
-program = alias `endBy` (char ';' >> many space)
+program = do
+		prog <- alias `endBy` (char ';' >> many space)
+		eof
+		return prog
 
 {- ALIAS -}
 
