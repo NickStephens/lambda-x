@@ -16,7 +16,7 @@ symbol = T.symbol lexer
 natural = T.natural lexer
 semi = T.semi lexer
 reserved = T.reserved lexer
-reservedOp = T.reservedOp lexer
+parens = T.parens lexer
 
 {- PROGRAM -}
 
@@ -37,33 +37,31 @@ alias = do
 {- EXPRESSION -}
 -- binary sugar and operator application has higher precedence 
 -- then functional application
-terminator = do
-		exp <- rel 
-		many space
-		return exp
 
-expression = rel     `chainl1` application 
-rel 	   = list    `chainl1` (binary relop)
+expression = list    `chainl1` (binary relop)
 list 	   = term    `chainl1` (binary listop)
 term 	   = factor  `chainl1` (binary addop)
-factor     = primary `chainl1` (binary mulop)
-primary    = variable <|> lambda <|> parexpression <|> operator
+factor	   = app     `chainl1` (binary mulop)
+app 	   = primary `chainl1` application
+primary    = try (parexpression) <|> operator <|>  variable <|> lambda 
 
 {- PARENTHESIZED EXPRESSION -}
-parexpression :: Parser Expr
 parexpression = do
-	between (symbol "(") (symbol ")") expression
+		char '('
+		many space
+		e <- expression
+		many space
+		char ')'
+		return e
 
 {- BINARY SUGAR -}
 binary f = do
-	many space
 	op <- f
-	many space
 	return (\x -> \y -> (App (App op x) y))
 
 {- APPLICATION -}
 application = do
-	many1 space
+	char ' '
 	return App
 
 {- LAMBDA ABSTRACTION -}
@@ -85,13 +83,12 @@ variable = do
 operator = do
 	relop <|> addop <|> mulop <|> listop <?> "operator"
 
-
 relop = do
-	try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> try (neq)
+	try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> neq
 	<?> "relational operator"
 
 listop = do
-	try(cons) <|> try (car) <|> cdr <?> "list operator"
+	try(cons) <|> try (car) <|> try(cdr) <?> "list operator"
 
 addop = do
 	add <|> sub <?> "addition operator"
@@ -100,75 +97,68 @@ mulop = do
 	mul <|> div <?> "multiplicative operator"
 
 -- ARITHMENTIC OPERATORS
-add :: Parser Expr
 add = do
 	char '+'
 	return $ Op ADD
 
 
-sub :: GenParser Char st (Expr)
 sub = do
 	char '-'
 	return $ Op SUB
 
 
-mul :: GenParser Char st (Expr)
 mul = do
 	char '*'
 	return $ Op MUL
 
 
-div :: GenParser Char st (Expr)
 div = do
 	char '/'
 	return $ Op DIV 
 
 -- RELATIONAL OPERATORS
-lt :: GenParser Char st (Expr)
+
 lt = do
 	char '<'
 	return $ Op LT
 
 
-gt :: GenParser Char st (Expr)
 gt = do
 	char '>'
 	return $ Op GT 
 
-elt :: GenParser Char st (Expr)
+
 elt = do
 	string "<="
 	return $ Op ELT
 
-egt :: GenParser Char st (Expr)
+
 egt = do
 	string ">="
 	return $ Op EGT
 
-eq :: GenParser Char st (Expr)
+
 eq = do
 	string "=="
 	return $ Op EQ
 
-neq :: GenParser Char st (Expr)
+
 neq = do
 	string "/="
 	return $ Op NEQ
 
 -- LIST OPERATORS
-car :: GenParser Char st (Expr)
+
 car = do
 	string "car"
 	return $ Op CAR
 
 
-cdr :: GenParser Char st (Expr)
 cdr = do
 	string "cdr"
 	return $ Op CDR
 
 
-cons :: GenParser Char st (Expr)
 cons = do
 	string "cons"
 	return $ Op CONS 
