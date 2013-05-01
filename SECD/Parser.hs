@@ -39,7 +39,7 @@ alias = do
 -- then functional application
 
 expression = list    `chainl1` (binary relop)
-list 	   = term    `chainl1` (binary listop)
+list 	   = factor  `chainl1` (binary cons)
 term 	   = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = primary `chainl1` application
@@ -88,7 +88,7 @@ relop = do
 	<?> "relational operator"
 
 listop = do
-	try(cons) <|> try (car) <|> try(cdr) <?> "list operator"
+	car <|> cdr <?> "list operator"
 
 addop = do
 	add <|> sub <?> "addition operator"
@@ -147,20 +147,25 @@ neq = do
 	string "/="
 	return $ Op NEQ
 
+notop :: Parser Expr
+notop = do
+	string "!"
+	return $ Op NOT
+
 -- LIST OPERATORS
 
 car = do
-	string "car"
+	char '^'
 	return $ Op CAR
 
 
 cdr = do
-	string "cdr"
+	char '~'
 	return $ Op CDR
 
 
 cons = do
-	string "cons"
+	char ':'
 	return $ Op CONS 
 
 {- LET -}
