@@ -6,20 +6,32 @@ import AbstractSyntax
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Error
 
-{-
-run p = case (parse program "" p) of
-		Left err -> putStr $ showErrorMessages $ errorMessages err
-		Right res -> res
--}
-
 {- PROGRAM -}
 
 program :: Parser Program
 program = alias `endBy` (char ';' >> many space)
 
 {- ALIAS -}
-alias :: Parser Alias
-alias = do
+
+alias = try (trec) <|> try (rec) <|> norec 
+
+norec = do
+	(als, params, exp) <- acenter
+	return $ NoRec als params exp
+
+trec = do
+	string "Tletrec"
+	many1 space
+	(als, params, exp) <- acenter
+	return $ TRec als params exp
+
+rec = do
+	string "Letrec"
+	many1 space
+	(als, params, exp) <- acenter
+	return $ Rec als params exp
+
+acenter = do
 	als <- name
 	many1 space
 	params <- name `sepEndBy` (char ' ')
@@ -27,7 +39,7 @@ alias = do
 	char '='
 	many space
 	exp <- expression
-	return $ Alias als params exp
+	return $ (als, params, exp)
 
 {- EXPRESSION -}
 -- binary sugar and operator application has higher precedence 
