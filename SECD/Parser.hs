@@ -101,14 +101,14 @@ number = try (double) <|> integer
 integer :: Parser Expr
 integer = do
 	int <- many1 digit
-	return $ Val . ValNumber . NumInt $ toInt 0 int
+	return $ Val . ValInt $ toInt 0 int
 
 double :: Parser Expr
 double = do
 	head <- many1 digit
 	char '.'
 	tail <-	many1 digit
-	return $ Val . ValNumber . NumDouble $ (fromIntegral $ toInt 0 (head ++ tail)) / (10^(length tail))
+	return $ Val . ValDouble $ (fromIntegral $ toInt 0 (head ++ tail)) / (10^(length tail))
 	
 toInt n [] = n
 toInt n (s:tr) = toInt (10*n + digitToInt s) tr
