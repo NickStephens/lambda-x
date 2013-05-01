@@ -30,25 +30,22 @@ alias = do
 	return $ Alias als params exp
 
 {- BINARY SUGAR -}
-binary = do
+binary f = do
 	many space
-	op <- operator 
+	op <- f
 	many space
-	return (\e1 -> \e2 -> (App (App op e1) e2))
+	return (\x -> \y -> (App (App op x) y))
 
 {- EXPRESSION -}
--- binary sugar and operator application has higher precedence
+-- binary sugar and operator application has higher precedence 
+-- then functional application
 
-
-expression :: Parser Expr
-expression = term `chainl1` application
-
-factor = chainl1 (variable <|> lambda 
-			<|> operator <|> parexpression) application
-
-term = (chainl1 (variable <|> lambda 
-			<|> operator <|> parexpression) (binary)) <|> factor  
-
+expression = rel     `chainl1` application
+rel 	   = list    `chainl1` (binary relop)
+list 	   = term    `chainl1` (binary listop)
+term 	   = factor  `chainl1` (binary addop)
+factor     = primary `chainl1` (binary mulop)
+primary    = variable <|> lambda <|> parexpression <|> operator
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression :: Parser Expr
