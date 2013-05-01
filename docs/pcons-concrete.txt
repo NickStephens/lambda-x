@@ -1,12 +1,12 @@
 CONCRETE SYNTAX FOR PCONS
 
-Program -> Def+
+Program -> Alias+
 
-Def -> LETF | LETREC
+Alias -> LETF | LETREC | TLETREC
 
-LETF   ->  Name {Arg} '=' Exp 
-LETREC -> 'Letrec' Name {Arg} '=' Exp
-TLETREC -> 'TLetrec' Name {Arg} '=' Exp
+LETF   ->  Name {Arg} '=' Exp;
+LETREC -> 'Letrec' Name {Arg} '=' Exp;
+TLETREC -> 'TLetrec' Name {Arg} '=' Exp;
 
 -------- Purity --------
 
