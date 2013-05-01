@@ -6,6 +6,12 @@ import AbstractSyntax
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Error
 
+main file = do 
+	f <- parseFromFile program file
+	case (f) of
+		Left err -> print err
+		Right res -> print res
+
 {- PROGRAM -}
 
 program :: Parser Program
@@ -87,6 +93,20 @@ lambda = do
 variable = do
 	nm <- name
 	return $ Var nm
+
+{- LET -}
+
+plet :: Parser Expr
+plet = do
+	string "let"
+	many1 space
+	als <- alias
+	char ';'
+	many space
+	string "in"
+	many1 space
+	exp <- expression
+	return $ Let als exp
 
 {- VALUES -}
 
@@ -222,19 +242,6 @@ cdr = do
 cons = do
 	char ':'
 	return $ Op CONS 
-
-{- LET -}
-
-{-
-letinp :: Parser Expr
-letinp = do
-	reserved "let"
-	als <- alias
-	many1 space
-	reserved "in"
-	inexp <- expression	
-	return Let als inexp	
--}
 
 {- CASE -}
 
