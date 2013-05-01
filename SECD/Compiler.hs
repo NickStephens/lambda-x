@@ -77,21 +77,21 @@ comp expr = case expr of
 		ce <- comp e
 		return ce
 
-
+	Skp -> return [SKP]
 	RCL pred th el -> do
 		p <- comp pred
 		trm <- comp th
 		cnt <- comp el
-		return [BL [RC (p++[SEL]++trm++cnt)],CLOS]
+		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]
 	TRM e -> do
 		ce <- comp e
-		return [BL (ce++[RTN])]
+		return $ ce
 	CNT e -> do
 		ce <- comp e
-		return [BL (ce++[RAP,RTN])]
+		return $ ce++[RAP]
 	TNT e -> do
 		ce <- comp e
-		return [BL (ce++[TAP])]
+		return $ ce++[TAP] --leaves the superflous RTN in RCL
 
 params [] = return ()
 params (p:ps)= do

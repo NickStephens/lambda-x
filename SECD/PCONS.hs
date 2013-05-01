@@ -15,14 +15,14 @@ data Expr =
 
 		Def Name Params Expr | RDef Name Params Expr | Clo Expr | Rec Name | 
 
-		TRM Expr | TRCL Expr Expr Expr | RCL Expr Expr Expr | CNT Expr | TNT Expr
+		TRM Expr | TRCL Expr Expr Expr | RCL Expr Expr Expr | CNT Expr | TNT Expr | Skp
 
 				deriving (Show, Eq, Ord)
 
 type Name = String
 type Params = [Name]
 
-data AVal = AF Float | AI Int | AC Char | AB Bool
+data AVal = AF Float | AI Integer | AC Char | AB Bool
 		deriving (Show, Eq, Ord)
 
 ts1 = App (Lam (App (Lam (BinOp Add (BinOp Mul (Var "n") (Var "m")) (Var "m"))) (Val$AI 2))) (Val$AI 3)
@@ -43,9 +43,11 @@ ls = Cons (Val$AI 2) Nil
 
 em = App (Lam (App (Lam (Cons (Var "x") (Var "y"))) (Val$AI 3))) Nil
 
+ts7 = App (Lam (App (Lam (App func (Val$AI 0))) (Val$AI 0))) trac
+
 ts8 = App (Lam (App (Lam (App func (Val$AI 5))) (Val$AI 4))) (Val$AI 3)
 
-func = Def "func" ["x", "y", "z"] (Lam (BinOp Sub (Var "x") (BinOp Sub (Var "y") (Var "z"))))
+func = Def "func" ["x", "y", "z"] (Lam (BinOp Sub (Var "x") (BinOp Sub (Var "z") (Var "y"))))
 
 pfunc = RDef "pf" ["c", "a"]
 	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
@@ -62,6 +64,13 @@ tfunc = RDef "pf" ["c", "a"]
 
 trac = App (Lam (App tfunc (Val$AI 6))) (Val$AI 1)
 
+bin = BinOp Sub (Val$AI 0) (Val$AI 720)
 
 
+fuc = RDef "pf" ["c"]
+	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
+	(TRM (Val$AI 1))
+	(BinOp Mul (Var "c") (CNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) Nil))) )
+
+fct = App (Lam (App fuc (Val$AI 6))) (Val$AI 1)
 

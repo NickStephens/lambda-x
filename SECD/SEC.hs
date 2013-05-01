@@ -27,12 +27,12 @@ data Code =
 			SEL |
 			BL Block | --load func
 			RC Block |
-			APP | TAP | RAP |
+			APP | TAP | RAP | SKP |
 			RTN |
 			LDC Code |
 			Op Oper |
 			NIL | CONS | CAR | CDR | NULL |
-			I Int | F Float | L [Code] | CL Closure | B Bool |
+			I Integer | F Float | L [Code] | CL Closure | B Bool |
 			E Env | C Char 
 				deriving (Eq, Show)
 {-
@@ -110,7 +110,7 @@ delta = do
 			let (L as:rest) = s
 			let (RC c':e')  = e
 			put (rest, RC c':as, c')
-
+		SKP -> put (s,e,c)
 
 
 oper :: Oper -> Scratch -> Secd Code
