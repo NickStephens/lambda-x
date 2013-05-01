@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -88,7 +88,7 @@ delta = do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
 		CAR -> do
-			let L as = head s
+ 			let L as = head s
 			put (head as:tail s, e, c)
 		CDR -> do
 			let L as = head s
@@ -105,7 +105,7 @@ delta = do
 		RAP -> do
 			let (L as:rest) = s
 			let (RC c':e')  = e
-			put (BL c:E e':rest, RC c':as, c')
+			put (BL c:E e:rest, RC c':as, c')
 		TAP -> do
 			let (L as:rest) = s
 			let (RC c':e')  = e
@@ -118,11 +118,13 @@ oper op s
 	|length s < 2 = throwError "not enough values on stack to operate on"
 	|otherwise = case head s of
 		I i -> case head (tail s) of
-			I i' -> return (appO op i i')
+			I i' -> return (appI op i i')
 			_    -> throwError "second arg not an int"
-		_   -> throwError "first arg not an int"
+		B b  -> case head (tail s) of
+			B b' -> return (appB op b b')
+			_    -> throwError "second arg not a boolean"
 
-appO op i i'
+appI op i i'
 	|op == Add = I $ i' + i
 	|op == Sub = I $ i' - i
 	|op == Mul = I $ i' * i
@@ -131,6 +133,9 @@ appO op i i'
 	|op == Lt = B $ i < i'
 	|op == Gt = B $i > i'
 	|op == Equ = B $ i == i'
+
+appB op b b'
+	|op == Or = B $ b || b'
 
 rela rel s
 	|length s < 2 = throwError "not enough values on stack to operate on"
@@ -209,6 +214,11 @@ t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CON
 fibe = BL [ACC 2, LDC (I 0), Op Equ, SEL,
 	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
 	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+
+
+
+fff = [BL [RC [ACC 2,LDC (I 0),Op Equ,ACC 2,LDC (I 1),Op Equ,Op Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),Op Sub,RAP,ACC 2,LDC (I 2),Op Sub,RAP,Op Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
+
 
 --Stack operations
 

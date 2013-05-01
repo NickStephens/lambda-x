@@ -1,7 +1,7 @@
 -- Abstract Syntax for PCONS
 module PCONS where
 
-import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ))
+import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ, And, Or))
 
 data Expr = 
 
@@ -52,7 +52,7 @@ func = Def "func" ["x", "y", "z"] (Lam (BinOp Sub (Var "x") (BinOp Sub (Var "z")
 pfunc = RDef "pf" ["c", "a"]
 	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
 	(TRM (Var "a"))
-	(CNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )
+	(CNT (Cons (BinOp Sub (Var "c") (Val$AI 1)) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )
 
 fract = App (Lam (App pfunc (Val$AI 6))) (Val$AI 1)
 
@@ -73,4 +73,14 @@ fuc = RDef "pf" ["c"]
 	(BinOp Mul (Var "c") (CNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) Nil))) )
 
 fct = App (Lam (App fuc (Val$AI 6))) (Val$AI 1)
+
+
+fib = RDef "f" ["n"]
+	(RCL (BinOp Or (BinOp Equ (Var "n") (Val$AI 0)) (BinOp Equ (Var "n") (Val$AI 1)) )
+	(TRM (Val$AI 1))
+	(BinOp Add (CNT (Cons (BinOp Sub (Var "n") (Val$AI 1)) Nil)) (CNT (Cons (BinOp Sub (Var "n") (Val$AI 2)) Nil))))
+
+frb = App fib (Val$AI 4)
+
+
 
