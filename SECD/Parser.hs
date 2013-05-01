@@ -18,29 +18,31 @@ semi = T.semi lexer
 reserved = T.reserved lexer
 reservedOp = T.reservedOp lexer
 
+{- PROGRAM -}
+
+program :: Parser Program
+program = alias `endBy` semi
+
 {- ALIAS -}
 alias :: Parser Alias
 alias = do
 	als <- name
 	many1 space
 	params <- name `sepEndBy` (char ' ')
+	many space
 	symbol "="
 	exp <- expression
-	semi
 	return $ Alias als params exp
-
-{- BINARY SUGAR -}
-binary f = do
-	many space
-	op <- f
-	many space
-	return (\x -> \y -> (App (App op x) y))
 
 {- EXPRESSION -}
 -- binary sugar and operator application has higher precedence 
 -- then functional application
+terminator = do
+		exp <- rel 
+		many space
+		return exp
 
-expression = rel     `chainl1` application
+expression = rel     `chainl1` application 
 rel 	   = list    `chainl1` (binary relop)
 list 	   = term    `chainl1` (binary listop)
 term 	   = factor  `chainl1` (binary addop)
@@ -51,6 +53,13 @@ primary    = variable <|> lambda <|> parexpression <|> operator
 parexpression :: Parser Expr
 parexpression = do
 	between (symbol "(") (symbol ")") expression
+
+{- BINARY SUGAR -}
+binary f = do
+	many space
+	op <- f
+	many space
+	return (\x -> \y -> (App (App op x) y))
 
 {- APPLICATION -}
 application = do

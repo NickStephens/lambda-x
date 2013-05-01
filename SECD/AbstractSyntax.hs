@@ -1,6 +1,6 @@
 module AbstractSyntax where
 
-data Program  = Program [Alias]
+type Program  = [Alias]
 
 type Name     = String
 data Alias    = Alias Name [Name] Expr
@@ -8,7 +8,8 @@ data Alias    = Alias Name [Name] Expr
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Case Expr [(Pattern, Expr)] | Let Alias Expr |
-		Op Operator | Val Value
+		Op Operator | Val Value |
+		TERM -- Expression Terminator
 		deriving (Show, Eq)
 
 data Operator = ADD | SUB | MUL | DIV |
