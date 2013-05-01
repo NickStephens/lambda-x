@@ -20,8 +20,8 @@ data Operator = ADD | SUB | MUL | DIV |
 data Pattern  = List (Name, Name) | Pair (Name, Name)
 		deriving (Show, Eq)
 
-data Value    = ValNumber Number | ValList [Expr] | ValBool Bool | ValChar Char
+data Value    = ValNumber Number | ValPair (Expr, Expr) | ValList [Expr] | ValBool Bool | ValChar Char
 		deriving (Show, Eq)
 
-data Number   = NumInt Int | NumFloat Float 
+data Number   = NumInt Int | NumDouble Double
 		deriving (Show, Eq)

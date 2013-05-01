@@ -1,27 +1,21 @@
 module Parser where 
 
 import Prelude hiding (LT, GT, EQ, div)
-import qualified Data.Map as Map
+import Data.Char
 import AbstractSyntax 
 import Text.ParserCombinators.Parsec
-import qualified Text.Parsec.Token as T
-import Text.Parsec.Language ( haskellDef )
+import Text.Parsec.Error
 
-lexer = T.makeTokenParser (haskellDef)
-
-identifier = T.identifier lexer
-lexeme = T.identifier lexer
-whiteSpace = T.whiteSpace lexer
-symbol = T.symbol lexer
-natural = T.natural lexer
-semi = T.semi lexer
-reserved = T.reserved lexer
-parens = T.parens lexer
+{-
+run p = case (parse program "" p) of
+		Left err -> putStr $ showErrorMessages $ errorMessages err
+		Right res -> res
+-}
 
 {- PROGRAM -}
 
 program :: Parser Program
-program = alias `endBy` semi
+program = alias `endBy` (char ';' >> many space)
 
 {- ALIAS -}
 alias :: Parser Alias
@@ -30,7 +24,8 @@ alias = do
 	many1 space
 	params <- name `sepEndBy` (char ' ')
 	many space
-	symbol "="
+	char '='
+	many space
 	exp <- expression
 	return $ Alias als params exp
 
@@ -38,12 +33,12 @@ alias = do
 -- binary sugar and operator application has higher precedence 
 -- then functional application
 
-expression = list    `chainl1` (binary relop)
-list 	   = factor  `chainl1` (binary cons)
+expression = stratum `chainl1` (binary relop)
+stratum    = term    `chainl1` (binary cons)
 term 	   = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = primary `chainl1` application
-primary    = try (parexpression) <|> operator <|>  variable <|> lambda 
+primary    = try (parexpression) <|> operator <|>  variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -66,17 +61,70 @@ application = do
 
 {- LAMBDA ABSTRACTION -}
 lambda = do
-	symbol "\\"
-	name <- identifier
-	symbol "."
+	char '\\'
+	many space
+	nm <- name
+	many space
+	char '.'
+	many space
 	test <- expression 
-	return $ Lam name test
+	return $ Lam nm test
 
 {- VARIABLE -}
 
 variable = do
 	nm <- name
 	return $ Var nm
+
+{- VALUES -}
+
+value = pair <|> list <|> integer <|> pchar <|> bool
+
+pair = do
+	char '('
+	many space
+	e1 <- expression
+	char ','
+	many space
+	e2 <- expression
+	char ')'
+	return $ Val $ ValPair (e1, e2)
+
+list = do
+	char '['
+	elst <- (many space >> expression) `sepBy` (char ',')
+	char ']'
+	return $ Val $ ValList elst
+
+number = try (double) <|> integer
+
+integer :: Parser Expr
+integer = do
+	int <- many1 digit
+	return $ Val . ValNumber . NumInt $ toInt 0 int
+
+double :: Parser Expr
+double = do
+	head <- many1 digit
+	char '.'
+	tail <-	many1 digit
+	return $ Val . ValNumber . NumDouble $ (fromIntegral $ toInt 0 (head ++ tail)) / (10^(length tail))
+	
+toInt n [] = n
+toInt n (s:tr) = toInt (10*n + digitToInt s) tr
+
+bool :: Parser Expr
+bool = do
+	bl <- (string "true" <|> string "false")
+	return bl
+	return $ Val . ValBool $ if bl == "true" then True else False
+
+pchar :: Parser Expr
+pchar = do
+	char '\''
+	c <- anyChar
+	char '\''
+	return $ Val $ ValChar c
 
 {- OPERATORS -}
 
@@ -122,26 +170,21 @@ lt = do
 	char '<'
 	return $ Op LT
 
-
 gt = do
 	char '>'
 	return $ Op GT 
-
 
 elt = do
 	string "<="
 	return $ Op ELT
 
-
 egt = do
 	string ">="
 	return $ Op EGT
 
-
 eq = do
 	string "=="
 	return $ Op EQ
-
 
 neq = do
 	string "/="
