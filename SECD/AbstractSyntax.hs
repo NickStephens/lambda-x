@@ -11,14 +11,14 @@ data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Op Operator | Val Value 		deriving (Show, Eq)
 
 data Operator = ADD | SUB | MUL | DIV |
-		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |	
-		CDR | CAR | CONSo
+		LT | GT | ELT | EGT | EQ | NEQ | NOT |	
+		CDR | CAR | CONS
 		deriving (Show, Eq)
 
 data Pattern  = List (Name, Name) | Pair (Name, Name)
 		deriving (Show, Eq)
 
-data Value    = ValInt Integer | ValDouble Double | ValPair (Expr, Expr) | ValList [Expr] | ValBool Bool | ValChar Char
+data Value    = ValInt Int | ValDouble Double | ValPair (Expr, Expr) | ValList [Expr] | ValBool Bool | ValChar Char
 		deriving (Show, Eq)
 
 data Number   = NumInt Int | NumDouble Double
