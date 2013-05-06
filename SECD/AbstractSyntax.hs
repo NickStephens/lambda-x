@@ -8,7 +8,7 @@ data Alias    = NoRec Name [Name] Expr | Rec Name [Name] Expr | TRec Name [Name]
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Case Expr [(Pattern, Expr)] | Let Alias Expr |
-		Op Operator | Val Value 		deriving (Show, Eq)
+		Cond Expr Expr Expr | Op Operator | Val Value 		deriving (Show, Eq)
 
 data Operator = ADD | SUB | MUL | DIV |
 		LT | GT | ELT | EGT | EQ | NEQ | NOT |	

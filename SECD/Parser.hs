@@ -54,11 +54,11 @@ acenter = do
 -- binary sugar and operator application has higher precedence 
 -- then functional application
 
-expression = stratum `chainl1` (binary relop)
+expression = stratum `chainl1` (binary relop) <|> primary 
 stratum    = term    `chainl1` (binary cons)
 term 	   = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
-app 	   = primary `chainl1` application
+app 	   = primary `chainl1` application 
 primary    = try (parexpression) <|> operator <|>  variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
@@ -110,6 +110,22 @@ plet = do
 	many1 space
 	exp <- expression
 	return $ Let als exp
+
+{- CONDITIONALS -}
+
+conditional = do
+	string "if"
+	many1 space
+	bool <- parexpression
+	many1 space
+	string "then"
+	many1 space
+	branch1 <- parexpression
+	many1 space
+	string "else"	
+	many1 space
+	branch2 <- parexpression
+	return $ Cond bool branch1 branch2
 
 {- VALUES -}
 
