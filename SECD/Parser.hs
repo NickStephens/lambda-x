@@ -4,6 +4,7 @@ import Prelude hiding (LT, GT, EQ, div)
 import Data.Char
 import AbstractSyntax 
 import Text.ParserCombinators.Parsec
+import qualified Text.Parsec.Expr as EX
 import Text.Parsec.Error
 
 main file = do 
@@ -54,12 +55,22 @@ acenter = do
 -- binary sugar and operator application has higher precedence 
 -- then functional application
 
-expression = stratum `chainl1` (binary relop) <|> primary 
-stratum    = term    `chainl1` (binary cons)
-term 	   = factor  `chainl1` (binary addop)
+{-
+expression = EX.buildExpressionParser table term
+
+table = [ [EX.Infix application EX.AssocLeft],
+	  [EX.Infix (binary mulop) EX.AssocLeft],
+	  [EX.Infix (binary addop) EX.AssocLeft],
+	  [EX.Infix (binary cons) EX.AssocLeft, EX.Prefix (unary car), EX.Prefix (unary cdr)],
+	  [EX.Infix (binary relop) EX.AssocLeft, EX.Prefix (unary notop)] ]
+-}
+
+expression = stratum `chainl1` (binary relop)
+stratum    = primary `chainl1` (binary cons)
+primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
-app 	   = primary `chainl1` application 
-primary    = try (parexpression) <|> operator <|>  variable <|> lambda <|> value
+app 	   = term `chainl1` application 
+term = try (parexpression) <|> paroperator <|>  variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -70,14 +81,28 @@ parexpression = do
 		char ')'
 		return e
 
-{- BINARY SUGAR -}
+paroperator = do
+		char '('
+		many space
+		op <- operator
+		many space
+		char ')'
+		return op
+
+{- SUGAR -}
 binary f = do
+	many space
 	op <- f
+	many space
 	return (\x -> \y -> (App (App op x) y))
+
+unary f = do
+	op <- f
+	return (\x -> (App op x))
 
 {- APPLICATION -}
 application = do
-	char ' '
+	many1 space
 	return App
 
 {- LAMBDA ABSTRACTION -}
