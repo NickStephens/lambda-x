@@ -1,3 +1,6 @@
+module Compiler where
+
+
 import PCONS
 import SEC
 import qualified Data.Map as Map
@@ -9,17 +12,18 @@ type CP = State (Scope, Int)
 --compile :: Expr -> [Instr]
 compile expr = fst$runState (comp expr) (Map.empty, 1)
 
-comp :: Expr -> CP [Code]
+comp :: Expression -> CP [Code]
 comp expr = case expr of
-	Lam e -> do
+	Lambda e -> do
 		e' <- comp e
+--		modify (\(e,n) -> (e,1)) --DeBrujin reset
+		modify (\(e,n) -> (Map.empty,1)) --total env. reset
 		return [BL (e' ++ [RTN]),CLOS]
-	App f v -> do
-		modify (\(e,n) -> (e,1))
+	Apply f v -> do
 		cf <- comp f --BL;CLOS
 		cv <- comp v --LD
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
-	Var x -> do
+	Variable x -> do
 		(env, vn) <- get
 		case Map.lookup x env of
 			Nothing -> do
@@ -30,11 +34,16 @@ comp expr = case expr of
 	BinOp op e1 e2 -> do
 		ce1 <- comp e1
 		ce2 <- comp e2
-		return $ ce1 ++ ce2 ++ [Op op]
+		return $ ce1 ++ ce2 ++ [OP op]
+--		case e1 of
+--			Var "" -> return $ ce1 ++ ce2 ++ [OP op]
+--			_ -> case e2 of
+--				Var "" -> return $ ce2 ++ ce1 ++ [OP op]
+--				_ -> return $ ce1 ++ ce2 ++ [OP op]
 --	UnOp op e -> do
 --		ce <- comp e
 --		return $ 
-	Val v -> case v of
+	Value v -> case v of
 		AF f -> return [LDC (F f)]
 		AI i -> return [LDC (I i)]
 		AB b -> return [LDC (B b)]
@@ -64,10 +73,10 @@ comp expr = case expr of
 		ce1 <- comp e1
 		ce2 <- comp e2
 		return $ ce2 ++ ce1 ++ [CONS]
-	Def nm ps e -> do
-		modify (\(e, _) -> (e,1))
+	Def ps e -> do --Def nm ps e -> do
+--		modify (\(e, _) -> (e,1))
 		params ps
-		modify $ \(e, v) -> (Map.insert nm v e, v+1)
+		--modify $ \(e, v) -> (Map.insert nm v e, v+1) -- necessary? 
 		ce <- comp e
 		return ce
 	RDef nm ps e -> do

@@ -3,19 +3,19 @@ module PCONS where
 
 import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ, And, Or))
 
-data Expr = 
+data Expression = 
 
-		App Expr Expr | Lam Expr | Var Name | Val AVal |
+		Apply Expression Expression | Lambda Expression | Variable Name | Value AVal |
 
-		Let Name Expr Expr | Case Expr [(Expr, Expr)] | Cond Expr Expr Expr |
+		Let Name Expression Expression | Case Expression [(Expression, Expression)] | Cond Expression Expression Expression |
 
-		UnOp Oper Expr | BinOp Oper Expr Expr |
+		UnOp Oper Expression | BinOp Oper Expression Expression |
 
-		CLst [Expr] | Nil | Cdr Expr | Car Expr | Cons Expr Expr |
+		CLst [Expression] | Nil | Cdr Expression | Car Expression | Cons Expression Expression |
 
-		Def Name Params Expr | RDef Name Params Expr | Clo Expr | Rec Name | 
+		Def Params Expression | RDef Name Params Expression | Clo Expression | Rec Name | 
 
-		TRM Expr | TRCL Expr Expr Expr | RCL Expr Expr Expr | CNT Expr | TNT Expr | Skp
+		TRM Expression | TRCL Expression Expression Expression | RCL Expression Expression Expression | CNT Expression | TNT Expression | Skp
 
 				deriving (Show, Eq, Ord)
 
@@ -25,62 +25,85 @@ type Params = [Name]
 data AVal = AF Float | AI Integer | AC Char | AB Bool
 		deriving (Show, Eq, Ord)
 
-ts1 = App (Lam (App (Lam (BinOp Add (BinOp Mul (Var "n") (Var "m")) (Var "m"))) (Val$AI 2))) (Val$AI 3)
+ts1 = Apply (Lambda (Apply (Lambda (BinOp Add (BinOp Mul (Variable "n") (Variable "m")) (Variable "m"))) (Value$AI 2))) (Value$AI 3)
 
-ts2 = App (Lam (BinOp Add (Val$AI 2) (Var "x"))) (Val$AI 3)
+ts2 = Apply (Lambda (BinOp Add (Value$AI 2) (Variable "x"))) (Value$AI 3)
 
-ts3 = App (Lam (BinOp Mul (Var "x") (Val$AI 2)))
-	(App (Lam (BinOp Add (Var "x") (Val$AI 2)))
-	(App (Lam (App (Lam (BinOp Mul (Var "n") (Var "m"))) (Val$AI 2))) (Val$AI 3)))
+ts3 = Apply (Lambda (BinOp Mul (Variable "x") (Value$AI 2)))
+	(Apply (Lambda (BinOp Add (Variable "x") (Value$AI 2)))
+	(Apply (Lambda (Apply (Lambda (BinOp Mul (Variable "n") (Variable "m"))) (Value$AI 2))) (Value$AI 3)))
 
-ts4 = Cond (BinOp Lt (Val$AI 4) (Val$AI 3)) ts1 ts3
+ts4 = Cond (BinOp Lt (Value$AI 4) (Value$AI 3)) ts1 ts3
 
-ts5 = Let "t" (Val$AI 2) (Cond (BinOp Lt (Var "t") (Val$AI 3))  ts1 ts3)
+ts5 = Let "t" (Value$AI 2) (Cond (BinOp Lt (Variable "t") (Value$AI 3))  ts1 ts3)
 
-ts6 = App (Lam (BinOp Sub (Var "n") (Val$AI 2))) (App (Lam (Car (Var "x"))) ls)
+ts6 = Apply (Lambda (BinOp Sub (Variable "n") (Value$AI 2))) (Apply (Lambda (Car (Variable "x"))) ls)
 
-ls = Cons (Val$AI 2) Nil
+ls = Cons (Value$AI 2) Nil
 
-em = App (Lam (App (Lam (Cons (Var "x") (Var "y"))) (Val$AI 3))) Nil
+em = Apply (Lambda (Apply (Lambda (Cons (Variable "x") (Variable "y"))) (Value$AI 3))) Nil
 
-ts7 = App (Lam (App (Lam (App func (Val$AI 0))) (Val$AI 0))) trac
+ts7 = Apply (Lambda (Apply (Lambda (Apply func (Value$AI 0))) (Value$AI 0))) trac
 
-ts8 = App (Lam (App (Lam (App func (Val$AI 5))) (Val$AI 4))) (Val$AI 3)
+ts8 = Apply (Lambda (Apply (Lambda (Apply func (Value$AI 5))) (Value$AI 4))) (Value$AI 3)
 
-func = Def "func" ["x", "y", "z"] (Lam (BinOp Sub (Var "x") (BinOp Sub (Var "z") (Var "y"))))
+func = Def  ["x", "y", "z"] (Lambda (BinOp Sub (Variable "x") (BinOp Sub (Variable "z") (Variable "y"))))
 
 pfunc = RDef "pf" ["c", "a"]
-	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
-	(TRM (Var "a"))
-	(CNT (Cons (BinOp Sub (Var "c") (Val$AI 1)) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )
+	(RCL (BinOp Equ (Variable "c") (Value$AI 1)) 
+	(TRM (Variable "a"))
+	(CNT (Cons (BinOp Sub (Variable "c") (Value$AI 1)) (Cons (BinOp Mul (Variable "c") (Variable "a")) Nil))) )
 
-fract = App (Lam (App pfunc (Val$AI 6))) (Val$AI 1)
+fract = Apply (Lambda (Apply pfunc (Value$AI 6))) (Value$AI 1)
 
 
 tfunc = RDef "pf" ["c", "a"]
-	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
-	(TRM (Var "a"))
-	(TNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) (Cons (BinOp Mul (Var "c") (Var "a")) Nil))) )
+	(RCL (BinOp Equ (Variable "c") (Value$AI 1)) 
+	(TRM (Variable "a"))
+	(TNT (Cons ( BinOp Sub (Variable "c") (Value$AI 1) ) (Cons (BinOp Mul (Variable "c") (Variable "a")) Nil))) )
 
-trac = App (Lam (App tfunc (Val$AI 6))) (Val$AI 1)
+trac = Apply (Lambda (Apply tfunc (Value$AI 69))) (Value$AI 1)
 
-bin = BinOp Sub (Val$AI 0) (Val$AI 720)
-
+bin = Lambda$BinOp Add (Variable "x") (Variable "y")
+--(Apply (Apply (Op ADD) (Variable "m")) (Variable "n"))
 
 fuc = RDef "pf" ["c"]
-	(RCL (BinOp Equ (Var "c") (Val$AI 1)) 
-	(TRM (Val$AI 1))
-	(BinOp Mul (Var "c") (CNT (Cons ( BinOp Sub (Var "c") (Val$AI 1) ) Nil))) )
+	(RCL (BinOp Equ (Variable "c") (Value$AI 1)) 
+	(TRM (Value$AI 1))
+	(BinOp Mul (Variable "c") (CNT (Cons ( BinOp Sub (Variable "c") (Value$AI 1) ) Nil))) )
 
-fct = App (Lam (App fuc (Val$AI 6))) (Val$AI 1)
+fct = Apply (Lambda (Apply fuc (Value$AI 6))) (Value$AI 1)
 
 
 fib = RDef "f" ["n"]
-	(RCL (BinOp Or (BinOp Equ (Var "n") (Val$AI 0)) (BinOp Equ (Var "n") (Val$AI 1)) )
-	(TRM (Val$AI 1))
-	(BinOp Add (CNT (Cons (BinOp Sub (Var "n") (Val$AI 1)) Nil)) (CNT (Cons (BinOp Sub (Var "n") (Val$AI 2)) Nil))))
+	(RCL (BinOp Or (BinOp Equ (Variable "n") (Value$AI 0)) (BinOp Equ (Variable "n") (Value$AI 1)) )
+	(TRM (Value$AI 1))
+	(BinOp Add (CNT (Cons (BinOp Sub (Variable "n") (Value$AI 1)) Nil)) (CNT (Cons (BinOp Sub (Variable "n") (Value$AI 2)) Nil))))
 
-frb = App fib (Val$AI 4)
+frb = Apply fib (Value$AI 4)
 
+lett = Let "f" (Value$AI 3) (BinOp Add (Variable "f") (Variable "f"))
+
+cal = Apply (Lambda (BinOp Add (Variable "x") (Variable "x"))) (Value$AI 3)
+
+
+brt = Apply (Lambda (BinOp Add (Variable "x") (Variable "x"))) cal
+
+lamb = (Lambda (Apply (Lambda (BinOp Sub (Variable "x") (Variable "y"))) (Value$AI 3)))
+
+lamp = Apply (Lambda (Apply (Variable "x") (Value$AI 2)))      (Lambda (Apply (Lambda (BinOp Sub (Variable "y") (Variable "x"))) (Value$AI 3)))
+
+--     Apply (Lambda (Apply (Variable "x") (Value$AI 2)))      (Lambda (Apply (Lambda (BinOp Sub (Variable "y") (Variable ""))) (Value$AI 3)))
+
+rty = Def ["a", "b"]
+	(BinOp Add (Variable "a") (Variable "b"))
+
+
+rtty = Apply (Lambda (Apply (Lambda (Apply (Lambda (Apply (Lambda rty) (Variable "x"))) (Variable "y"))) (Value$AI 3))) (Value$AI 2)
+
+
+tnk = Apply (Lambda (Apply ( (Variable "x")) (Value (AI 2)))) (Lambda (BinOp Add (Variable "a") (Value$AI 3)))
+
+tak = Apply (Lambda (Apply (Lambda (BinOp Sub (Variable "x") (Variable "y"))) (Value (AI 3)))) (Value$AI 2)
 
 
