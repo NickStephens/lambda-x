@@ -30,7 +30,7 @@ data Code =
 			APP | TAP | RAP | SKP |
 			RTN |
 			LDC Code |
-			Op Oper |
+			OP Oper |
 			NIL | CONS | CAR | CDR | NULL |
 			I Integer | F Float | L [Code] | CL Closure | B Bool |
 			E Env | C Char 
@@ -81,7 +81,7 @@ delta = do
 		RTN -> do
 			let (v:BL c':E e':rest) = s
 			put (v:rest, e', c')
-		Op op -> do
+		OP op -> do
 			rslt <- oper op s
 			put (rslt:((tail . tail) s), e, c) --pop two operands off S
 		CONS -> do
@@ -183,26 +183,26 @@ runtest tp = runErrorT (evalStateT run' tp)
 
 
 t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
-fact' = BL [ACC 1, LDC (I 1), Op Equ, SEL,
+fact' = BL [ACC 1, LDC (I 1), OP Equ, SEL,
 	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, TAP]]
 
 
-t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, Op Add]
-cl = [ACC 1, LDC (I 1), Op Add, RTN]
+t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, OP Add]
+cl = [ACC 1, LDC (I 1), OP Add, RTN]
 
 t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
-fact = BL [ACC 1, LDC (I 1), Op Equ, SEL,
+fact = BL [ACC 1, LDC (I 1), OP Equ, SEL,
 	BL [ACC 2,RTN],
-	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
+	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, APP],RTN]
 
 
 
 
 t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
-fibbd = BL [ACC 2, LDC (I 0), Op Equ, SEL,
+fibbd = BL [ACC 2, LDC (I 0), OP Equ, SEL,
 	BL [ACC 1, RTN],
-	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
 
 
 t5 = [revs, TLTRC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
@@ -211,13 +211,13 @@ revs = BL [ACC 1, NULL, SEL,
 	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
 
 t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
-fibe = BL [ACC 2, LDC (I 0), Op Equ, SEL,
+fibe = BL [ACC 2, LDC (I 0), OP Equ, SEL,
 	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
-	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
 
 
 
-fff = [BL [RC [ACC 2,LDC (I 0),Op Equ,ACC 2,LDC (I 1),Op Equ,Op Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),Op Sub,RAP,ACC 2,LDC (I 2),Op Sub,RAP,Op Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
+fff = [BL [RC [ACC 2,LDC (I 0),OP Equ,ACC 2,LDC (I 1),OP Equ,OP Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),OP Sub,RAP,ACC 2,LDC (I 2),OP Sub,RAP,OP Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
 
 
 --Stack operations

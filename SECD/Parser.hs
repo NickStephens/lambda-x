@@ -6,7 +6,8 @@ import AbstractSyntax
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Error
 
-main file = do 
+mane :: String -> IO ()
+mane file = do
 	f <- parseFromFile program file
 	case (f) of
 		Left err -> print err
@@ -59,7 +60,7 @@ stratum    = term    `chainl1` (binary cons)
 term 	   = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = primary `chainl1` application
-primary    = try (parexpression) <|> operator <|>  variable <|> lambda <|> value
+primary    = plet <|> try (parexpression) <|> operator <|>  variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -73,7 +74,7 @@ parexpression = do
 {- BINARY SUGAR -}
 binary f = do
 	op <- f
-	return (\x -> \y -> (App (App op x) y))
+	return (\x -> \y -> (Binary op x y))
 
 {- APPLICATION -}
 application = do
@@ -136,7 +137,7 @@ number = try (double) <|> integer
 integer :: Parser Expr
 integer = do
 	int <- many1 digit
-	return $ Val . ValInt $ toInt 0 int
+	return $ Val . ValInt $ toInteger (toInt 0 int)
 
 double :: Parser Expr
 double = do
@@ -203,11 +204,11 @@ div = do
 
 lt = do
 	char '<'
-	return $ Op LT
+	return $ Op LTo
 
 gt = do
 	char '>'
-	return $ Op GT 
+	return $ Op GTo
 
 elt = do
 	string "<="
@@ -219,7 +220,7 @@ egt = do
 
 eq = do
 	string "=="
-	return $ Op EQ
+	return $ Op EQo
 
 neq = do
 	string "/="
@@ -244,7 +245,7 @@ cdr = do
 
 cons = do
 	char ':'
-	return $ Op CONS 
+	return $ Op CONSo
 
 {- CASE -}
 
