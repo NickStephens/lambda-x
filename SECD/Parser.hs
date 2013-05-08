@@ -152,6 +152,54 @@ conditional = do
 	branch2 <- parexpression
 	return $ Cond bool branch1 branch2
 
+{- CASE OF -}
+caseof = do
+	string "case"
+	many1 space
+	test <- parexpression
+	many1 space
+	string "of"
+	many1 space
+	col <- cases
+	return $ Case test  col	
+
+cases = many1 pcase
+
+pcase = do
+	pat <- pattern
+	many space
+	string "->"	
+	many space
+	exp <- parexpression
+	many space
+	return (pat, exp)
+
+{- PATTERNS -}
+
+pattern = try (listpattern) <|> pairpattern
+
+listpattern = do
+	char '('
+	many space
+	head <- name	
+	many space
+	char ':'
+	many space
+	tail <- name
+	char ')'
+	return $ List (head, tail)
+
+pairpattern = do
+	char '('
+	many space
+	fst <- name
+	many space
+	char ','
+	many space
+	snd <- name
+	char ')'	
+	return $ Pair (fst, snd)
+
 {- VALUES -}
 
 value = pair <|> list <|> integer <|> pchar <|> bool
