@@ -15,7 +15,7 @@ data Operator = ADD | SUB | MUL | DIV |
 		CDR | CAR | CONS
 		deriving (Show, Eq)
 
-data Pattern  = List (Name, Name) | Pair (Name, Name)
+data Pattern  = List (Name, Name) | Pair (Name, Name) | Symbol Name
 		deriving (Show, Eq)
 
 data Value    = ValInt Int | ValDouble Double | ValPair (Expr, Expr) | ValList [Expr] | ValBool Bool | ValChar Char

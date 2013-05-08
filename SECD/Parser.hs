@@ -70,7 +70,7 @@ stratum    = primary `chainl1` (binary cons)
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
-term = try (parexpression) <|> paroperator <|>  variable <|> lambda <|> value
+term = try (caseof) <|> try (conditional) <|> try (parexpression) <|> paroperator <|>  variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -176,7 +176,7 @@ pcase = do
 
 {- PATTERNS -}
 
-pattern = try (listpattern) <|> pairpattern
+pattern = try (listpattern) <|> pairpattern <|> symbol
 
 listpattern = do
 	char '('
@@ -199,6 +199,10 @@ pairpattern = do
 	snd <- name
 	char ')'	
 	return $ Pair (fst, snd)
+
+symbol = do
+	nm <- name
+	return $ Symbol nm
 
 {- VALUES -}
 
