@@ -10,28 +10,11 @@ import Text.ParserCombinators.Parsec hiding (State)
 
 
 
-
-
-funcStream [p] = case p of
+funct p = case p of
 	NoRec nm prms e -> do
 		te <- trans e
 		return $ te
 	Recr nm prms e -> do
-		case e of
-			COND p e1 e2 -> do
-				pred <- trans p
-				trm <- trans e1
-				cnt <- trans e2 --recont e2
-				let rec = RCL pred (TRM trm) (CNT cnt)
-				return $ Def prms rec
-funcStream (p:ps) = do
-	cont <- funcStream ps
-	case p of
-		NoRec nm prms e -> do
-			te <- trans e
-			return $ Lett nm (Def prms te) cont
- 
-		Recr nm prms e -> do
 			(env,_) <- get
 			put $ (Map.insert nm 1 env, 1)
 			case e of
@@ -41,27 +24,33 @@ funcStream (p:ps) = do
 					cnt <- trans e2 --recont e2
 					let rec = RCL pred (TRM trm) cnt
 					modify (\_ -> (Map.empty,1))
-					return $ Lett nm (RDef prms rec) cont
+					return $ RDef prms rec
+	TRec nm prms e -> do
+		(env,_) <- get
+		put $ (Map.insert nm 1 env, 2)
+		case e of
+			COND p e1 e2 -> do
+				pred <- trans p
+				trm <- trans e1
+				cnt <- trans e2 --recont e2
+				let rec = RCL pred (TRM trm) cnt
+				modify (\_ -> (Map.empty,1))
+				return $ RDef prms rec
+funcStream [p] = funct p
+funcStream (p:ps) = do
+	let nm = nameOf p
+	cont <- funcStream ps
+	fnc <- funct p
+	return $ Lett nm fnc cont
+		where nameOf p = case p of
+			NoRec n _ _ -> n
+			Recr  n _ _ -> n
+			TRec  n _ _ -> n		
 
-		TRec nm prms e -> do
-			(env,_) <- get
-			put $ (Map.insert nm 1 env, 2)
-			case e of
-				COND p e1 e2 -> do
-					pred <- trans p
-					trm <- trans e1
-					cnt <- trans e2 --recont e2
-					let rec = RCL pred (TRM trm) cnt
-					modify (\_ -> (Map.empty,1))
-					return $ Lett nm (RDef prms rec) cont
 
 
 
 
-transv v = evalStateT (trv v) (Map.empty,1)
-trv v = do
-	tr <- trans v
-	return tr
 transl =  evalStateT trns (Map.empty, 1)
 trns = do
 	prg <- mind "pecan.txt"
@@ -74,25 +63,6 @@ silt = do
 	cm  <- comp trs
 	return cm
 
-stilt ts = evalStateT (stm ts) (Map.empty, 1)
-stm ts = do
-	cm <- comp ts
-	return cm
-
-
-
---recont e = do
-{-
-BinOp Mul (Variable "n") (Apply (Variable "fact") (BinOp Sub (Variable "n") (Value (AI 1))))
-
-[ACC 1,NIL,LDC (I 1),ACC 1,OP Sub,CONS,APP,ACC 1,OP Mul]
-
-(BinOp Mul (Variable "c") (CNT (Cons ( BinOp Sub (Variable "c") (Value$AI 1) ) Nil)))
-
-
-[LDC (I 1),ACC 1,OP Sub,NIL,CONS,RAP,ACC 1,OP Mul]
--}
-
 prog = evalStateT prg (Map.empty,1)
 prg = do
 	prg <- mind "pecan.txt"
@@ -102,6 +72,25 @@ prg = do
 --	liftIO $ print e
 	liftIO $ run e
 	return ()
+
+mind :: String -> TRN [Alias]
+mind file = do
+	f <- liftIO $ parseFromFile program file
+	case f of
+		Right res -> return res
+
+pecan = evalStateT pcn (Map.empty,1)
+pcn = do
+	prg <- mind "pecan.txt"
+	liftIO$ print prg
+	return ()
+
+--recont e = do
+{-
+Letrec fact n = if (n==1) then (1) else (n*(fact ((n-1):[])));
+main = fact 5;
+-}
+
 --(CNT (BinOp Cons (BinOp Sub (Variable "n") (Value (AI 1))) (LSD [])))
 --Tletrec fact c a = if (n==1) then (a) else (fact ((c-1):(a*c):[]));
 
@@ -216,60 +205,7 @@ upm op = case op of
 
 translate expr = evalStateT (trans expr) (Map.empty, 1)
 
-stamp = evalStateT cmpl (Map.empty,1)
-camp = evalStateT cmp (Map.empty,1)
 
-cmp :: TRN ()
-cmp = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			liftIO $ print tr
-			liftIO $ putStrLn ""
-			cp <- comp tr
-			liftIO $ print cp
-			return ()
-		Recr _ _ ex -> do
-			tr <- trans ex
-			liftIO $ print tr
-			liftIO $ putStrLn ""
-			cp <- comp tr
-			liftIO $ print cp
-			return ()
-
-mind :: String -> TRN [Alias]
-mind file = do
-	f <- liftIO $ parseFromFile program file
-	case f of
-		Right res -> return res
-
-cmpl :: TRN ()
-cmpl = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			cp <- comp tr
-			liftIO$ run cp
-			return ()
-
-tranny = evalStateT trny (Map.empty, 1)
-
-trny = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			liftIO$ print tr
-			return ()
-
-
-pecan = evalStateT pcn (Map.empty,1)
-pcn = do
-	prg <- mind "pecan.txt"
-	liftIO$ print prg
-	return ()
 
 
 

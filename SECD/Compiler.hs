@@ -20,19 +20,32 @@ comp expr = case expr of
 	Lambda x e -> do
 		--x is a list of names that must be reversed to get the right ACC numberings
 		params (reverse x)
+		(en,_) <- get
+		liftIO $ print en
+		liftIO $ putStrLn "L"
 		e' <- comp e
-		modify (\(e,n) -> (Map.empty,1))
+		liftIO $ putStrLn "LO"
+	--	modify (\(e,n) -> (Map.empty,1))
 		return [BL (e' ++ [RTN]),CLOS]
 	Apply f v -> do
-		env <- get --preserve env to return
-		modify (\(e,n) -> (Map.empty,1))
+--		env <- get
+		(e,_) <- get
+		liftIO $ print e
+		liftIO $ putStrLn "AF"
 		cf <- comp f --BL;CLOS
+		liftIO $ putStrLn "AFO"
 --		modify (\(e,n) -> (Map.empty,1))
-		put env --return to previous env
+		(e,_) <- get
+		liftIO $ print e
+		liftIO $ putStrLn "AV"
 		cv <- comp v --LD
---		put env --return to previous env
+		liftIO $ putStrLn "AVO"
+--		put env
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Variable x -> do
+		(e,_) <- get
+		liftIO $ print e
+		liftIO $ putStrLn ("V "++x)
 		(env, vn) <- get
 		case Map.lookup x env of
 			Nothing -> do
@@ -41,12 +54,13 @@ comp expr = case expr of
 			Just v -> do
 				return [ACC v]
 	BinOp op e1 e2 -> do
---		env <- get --preserve env to return
+		(e,n) <- get
 --		modify (\(e,n) -> (Map.empty,1))
+		liftIO $ print e
+		liftIO $ putStrLn "B"
 		ce1 <- comp e1
---		modify (\(e,n) -> (Map.empty,1))
 		ce2 <- comp e2
---		put env --return to previous env
+		put (e,n)
 		return $ ce2 ++ ce1 ++ [opt op]
 	UnOp op e -> do
 		te  <- comp e
