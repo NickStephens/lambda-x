@@ -16,7 +16,7 @@ data Operator = ADD | SUB | MUL | DIV |
 		CDRo | CARo | CONSo
 		deriving (Show, Eq, Read)
 
-data Pattern  = List (Name, Name) | Pair (Name, Name)
+data Pattern  = List (Name, Name) | Pair (Name, Name) | Symbol Name
 		deriving (Show, Eq, Read)
 
 data Value    = ValInt Integer | ValDouble Double |
