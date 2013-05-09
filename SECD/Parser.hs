@@ -44,7 +44,7 @@ rec = do
 acenter = do
 	als <- name
 	many1 space
-	params <- name `sepEndBy` (char ' ')
+	params <- pattern `sepEndBy` (char ' ')
 	many space
 	char '='
 	many space
@@ -178,7 +178,7 @@ pcase = do
 
 {- PATTERNS -}
 
-pattern = try (listpattern) <|> pairpattern <|> symbol
+pattern = try (listpattern) <|> pairpattern <|> symbol <|> valuePattern
 
 listpattern = do
         char '('
@@ -205,6 +205,11 @@ pairpattern = do
 symbol = do
         nm <- name
         return $ Symbol nm
+
+valuePattern = do
+		val <- value
+		return $ ValPattern val
+
 
 {- VALUES -}
 

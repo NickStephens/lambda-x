@@ -1,3 +1,0 @@
-test f a b = f a b;
-
-main = test (+) 1 2;

@@ -13,17 +13,27 @@ import Text.ParserCombinators.Parsec hiding (State)
 processParams :: [Alias] -> [Alias]
 processParams [] = []
 processParams ((NoRec nm prms e):as) = NoRec nm [] (placeParams prms e) : processParams as
-	where   
-		placeParams [] e = e
-		placeParams (x:xs) e = Lam x $ placeParams xs e
 processParams ((Recr nm prms e):as) = Recr nm [] (placeParams prms e) : processParams as
-	where   
-		placeParams [] e = e
-		placeParams (x:xs) e = Lam x $ placeParams xs e
 processParams ((TRec nm prms e):as) = TRec nm [] (placeParams prms e) : processParams as
-	where   
-		placeParams [] e = e
-		placeParams (x:xs) e = Lam x $ placeParams xs e
+		
+placeParams [] e = e
+placeParams (x:xs) e = Lam x $ placeParams xs e
+
+{-
+placeParams [] e = e
+placeParams (x:xs) e = case x of
+			ValPattern v -> placeParams xs e		
+			Symbol s -> Lam s $ placeParams xs e
+			List (h, t) -> Lam h $ placeParams xs e
+				--doesn't quiet suffice, we need a way of splitting
+				--up the list into these parts when it's passed as
+				--as an argument
+				-- one solution is to refer to h and t in the
+				-- body as (^<passedlist>) and (~<passedlist>)
+			Pair (f, s) -> Lam s $ placeParams xs e
+				-- same as above
+-}
+			
 
 funcStream [p] = case p of
 	NoRec nm prms e -> do

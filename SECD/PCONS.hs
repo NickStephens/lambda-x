@@ -1,6 +1,7 @@
 -- Abstract Syntax for PCONS
 module PCONS where
 
+import AbstractSyntax (Pattern)
 import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ, And, Or, Cdr, Car, Cons))
 
 data EXP = 
