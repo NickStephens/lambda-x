@@ -24,10 +24,11 @@ comp expr = case expr of
 		modify (\(e,n) -> (Map.empty,1))
 		return [BL (e' ++ [RTN]),CLOS]
 	Apply f v -> do
---		env <- get --preserve env to return
+		env <- get --preserve env to return
 		modify (\(e,n) -> (Map.empty,1))
 		cf <- comp f --BL;CLOS
 --		modify (\(e,n) -> (Map.empty,1))
+		put env --return to previous env
 		cv <- comp v --LD
 --		put env --return to previous env
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]

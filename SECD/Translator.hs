@@ -140,7 +140,7 @@ trans expr = case expr of
 {-	App x y -> do
 		ty <- trans y
 		case x of
-			Op op -> return $ Lambda [] (BinOp (opm op) ty (Variable ""))
+			Op op -> return $ Lambda [""] (BinOp (opm op) ty (Variable ""))
 			_     -> do
 				tx <- trans x
 				return $ Apply tx ty
@@ -168,12 +168,16 @@ trans expr = case expr of
 			_ -> do
 				te <- trans e
 				return $  Lambda [x] te
+
+{-	Lam x e -> do
+		te <- trans e
+		return $ Lambda [x] te
 	Let a ex -> do
 		tex <- trans ex
 		case a of
 			NoRec nm [] e -> do
 				te <- trans e
-				return $ Lett nm te tex
+				return $ Lett nm te tex-}
 {-	NoRec nm prms e -> do
 		te <- trans e
 		return $ Def prms te
