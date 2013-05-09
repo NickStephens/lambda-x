@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -32,7 +32,7 @@ data Code =
 			LDC Code |
 			OP Oper |
 			NIL | CONS | CAR | CDR | NULL |
-			I Integer | F Float | L [Code] | CL Closure | B Bool |
+			I Integer | D Double | L [Code] | CL Closure | B Bool |
 			E Env | C Char 
 				deriving (Eq, Show)
 {-
@@ -125,11 +125,11 @@ oper op s
 			_    -> throwError "second arg not a boolean"
 
 appI op i i'
-	|op == Add = I $ i' + i
-	|op == Sub = I $ i' - i
-	|op == Mul = I $ i' * i
-	|op == Div = I $ i' `div` i
-	|op == Mod = I $ i' `mod` i
+	|op == Add = I $ i + i'
+	|op == Sub = I $ i - i'
+	|op == Mul = I $ i * i'
+	|op == Div = I $ i `div` i'
+	|op == Mod = I $ i `mod` i'
 	|op == Lt = B $ i < i'
 	|op == Gt = B $i > i'
 	|op == Equ = B $ i == i'
