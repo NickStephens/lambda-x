@@ -1,48 +1,49 @@
-module SECD where
+module SEC where
 
 import qualified Data.Map as Map
 import Control.Monad.State
 import Control.Monad.Error
 
-type Scratch = [Value]
-type Env     = [Value]
-type Code   = [Instr]
-type Dump    = [Store]
-data Store   = BRT [Instr] | Call (Scratch, Env, Code) deriving Show
+type Scratch = [Code]
+type Env     = [Code]
+type CodeS   = [Code]
 
-type Continuation  = (Scratch, Env, Code)
 
-data Value   = I Integer | L [Value] | Cl Closure | B Bool | E Env | Bl Block deriving Eq
+type Continuation  = (Scratch, Env, CodeS)
+
+
 type Var     = String
 type Closure = (Func, Env)
 type Const   = Integer
-type Block   = [Instr]
-type Func    = [Instr]
-data Oper    = Add | Sub | Mul | Div | Mod deriving (Show, Eq)
-data Rela    = Lt | Gt | Equ deriving (Show, Eq)
-data Instr =
+type Block   = [Code]
+type Func    = [Code]
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons
+		deriving (Show, Eq, Ord)
+data Code =
 			ACC Int |
-			CLOS | LTRC | TLTRC |
+			CLOS | LTRC | TLTRC | STOS Block |
 			LET |
 			ENDLET |
 			SEL |
 			BL Block | --load func
-			APP | TAP |
+			RC Block |
+			APP | TAP | RAP | SKP |
 			RTN |
-			LDC Value |
-			Op Oper |
-			Rel Rela |
-			NIL | CONS | CAR | CDR | NULL deriving (Eq, Show)
-			
-
-
-instance Show Value where
+			LDC Code |
+			OP Oper |
+			NIL | CONS | CAR | CDR | NULL |
+			I Integer | D Double | L [Code] | CL Closure | B Bool |
+			E Env | C Char 
+				deriving (Eq, Show)
+{-
+instance Show Code where
 	show (I i) = show i
 	show (L v) = show v
-	show (Cl (f, e)) = "Cl ("++show f++",env)"
+	show (CL (f, e)) = "CL ("++show f++", "++show e
 	show (B b) = show b
 	show (E env) = show env
-	show (Bl block) = "Bl "++show block
+	show (BL block) = "BL "++show block
+-}
 
 delta :: Secd ()
 delta = do
@@ -54,13 +55,13 @@ delta = do
 			put (e!!(n-1):s, e, c)
 		LET -> do
 			let v = head s
-			put (s, v:e, c)
+			put (tail s, v:e, c)
 		TLTRC -> do
-			let Bl c' = head s
-			put (Cl (c', Bl c':[]):tail s, e, c)
+			let BL c' = head s
+			put (CL (c', BL c':[]):tail s, e, c)
 		LTRC -> do
-			let Bl c' = head s
-			put (Cl (c',Bl c':e):tail s, e, c)
+			let CL (c', _) = head s
+			put (CL (c',BL c':e):tail s, e, c)
 		ENDLET -> do
 			popE
 		SEL -> do
@@ -70,30 +71,24 @@ delta = do
 				True  -> put (tail s, e, btr++cs)
 				False -> put (tail s, e, bfl++cs)
 		BL bl -> do
-			put (Bl bl:s, e, c)
+			put (BL bl:s, e, c)
 		CLOS -> do
-			let Bl c' = head s
-			put (Cl (c',e):tail s, e, c)
+			let BL c' = head s
+			put (CL (c',e):tail s, e, c)
 		APP -> do
-	 		let (L v:Cl (c',e'):rest) = s
-			put (Bl c:E e:rest, v++e', c')
-		TAP -> do
-			let (L v:Cl (c',e'):rest) = s
-			put (rest, v++e', c')
+	 		let (L v:CL (c',e'):rest) = s
+			put (BL c:E e:rest, v++e', c')
 		RTN -> do
-			let (v:Bl c':E e':rest) = s
+			let (v:BL c':E e':rest) = s
 			put (v:rest, e', c')
-		Op op -> do
+		OP op -> do
 			rslt <- oper op s
-			put (rslt:((tail . tail) s), e, c) --pop two operands off S
-		Rel rel -> do
-			rslt <- rela rel s
 			put (rslt:((tail . tail) s), e, c) --pop two operands off S
 		CONS -> do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
 		CAR -> do
-			let L as = head s
+ 			let L as = head s
 			put (head as:tail s, e, c)
 		CDR -> do
 			let L as = head s
@@ -105,23 +100,42 @@ delta = do
 				else put (B False:tail s, e, c)
 		NIL -> do
 			put (L []:s, e, c)
+		RC c' -> do
+			put (s, RC c':e, c'++c)
+		RAP -> do
+			let (L as:rest) = s
+			let (RC c':e')  = e
+			put (BL c:E e:rest, RC c':as, c')
+		TAP -> do
+			let (L as:rest) = s
+			let (RC c':e')  = e
+			put (rest, RC c':as, c')
+		SKP -> put (s,e,c)
 
 
---oper :: Oper -> Scratch -> Secd Value
+oper :: Oper -> Scratch -> Secd Code
 oper op s
 	|length s < 2 = throwError "not enough values on stack to operate on"
 	|otherwise = case head s of
 		I i -> case head (tail s) of
-			I i' -> return (appO op i i')
+			I i' -> return (appI op i i')
 			_    -> throwError "second arg not an int"
-		_   -> throwError "first arg not an int"
+		B b  -> case head (tail s) of
+			B b' -> return (appB op b b')
+			_    -> throwError "second arg not a boolean"
 
-appO op i i'
+appI op i i'
 	|op == Add = I $ i + i'
 	|op == Sub = I $ i - i'
 	|op == Mul = I $ i * i'
 	|op == Div = I $ i `div` i'
 	|op == Mod = I $ i `mod` i'
+	|op == Lt = B $ i < i'
+	|op == Gt = B $i > i'
+	|op == Equ = B $ i == i'
+
+appB op b b'
+	|op == Or = B $ b || b'
 
 rela rel s
 	|length s < 2 = throwError "not enough values on stack to operate on"
@@ -136,7 +150,6 @@ appR rel i i'
 	|rel == Gt = B $i > i'
 	|rel == Equ = B $ i == i'
 
---type Secd = ErrorT String (StateT Continuation IO)
 type Secd = StateT Continuation (ErrorT String IO)
 
 run p = runtest ([], [], p)
@@ -149,7 +162,7 @@ run' = do
 	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
 	liftIO $ putStrLn ""
-	liftIO $ putStrLn ("Instr: " ++ (show$head c)++" ->")
+	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
@@ -165,27 +178,31 @@ displayEnv e = do
 		else do
 			liftIO $ putStrLn ("   "++ show e)
 			displayEnv $tail e
---runtest tp = evalStateT (runErrorT run') tp
+
 runtest tp = runErrorT (evalStateT run' tp)
 
-t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, Op Add]
-cl = [ACC 1, LDC (I 1), Op Add, RTN]
-
-t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
-fact = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
-	BL [ACC 2,RTN],
-	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, APP],RTN]
 
 t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
-fact' = BL [ACC 1, LDC (I 1), Rel Equ, SEL,
+fact' = BL [ACC 1, LDC (I 1), OP Equ, SEL,
 	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, Op Mul, CONS, LDC (I 1), ACC 1, Op Sub, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, TAP]]
+
+
+t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, OP Add]
+cl = [ACC 1, LDC (I 1), OP Add, RTN]
+
+t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
+fact = BL [ACC 1, LDC (I 1), OP Equ, SEL,
+	BL [ACC 2,RTN],
+	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, APP],RTN]
+
+
 
 
 t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
-fibbd = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+fibbd = BL [ACC 2, LDC (I 0), OP Equ, SEL,
 	BL [ACC 1, RTN],
-	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
 
 
 t5 = [revs, TLTRC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
@@ -194,13 +211,18 @@ revs = BL [ACC 1, NULL, SEL,
 	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
 
 t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
-fibe = BL [ACC 2, LDC (I 0), Rel Equ, SEL,
+fibe = BL [ACC 2, LDC (I 0), OP Equ, SEL,
 	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
-	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, Op Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, Op Add, CONS, CONS, TAP]]
+	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
+
+
+
+fff = [BL [RC [ACC 2,LDC (I 0),OP Equ,ACC 2,LDC (I 1),OP Equ,OP Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),OP Sub,RAP,ACC 2,LDC (I 2),OP Sub,RAP,OP Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
+
 
 --Stack operations
 
-pushS :: Value -> Secd ()
+pushS :: Code -> Secd ()
 pushS v = do
 	(s, e, c) <- get
 	put (v:s, e, c)
@@ -212,13 +234,13 @@ popS = do
 	put (tail s, e, c)
 	return ()
 
-topS :: Secd Value
+topS :: Secd Code
 topS = do
 	(s, e, c) <- get
 	put (tail s, e, c)
 	return $ head s
 
-topC :: Secd Instr
+topC :: Secd Code
 topC = do
 	(s, e, c) <- get
 	put (s, e, tail c)
@@ -231,10 +253,4 @@ popE = do
 	return ()
 
 
-{-
 
-[L [L [I 2,I 1],L []],Cl ([ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]],[Bl [ACC 1,NULL,SEL,BL [ACC 2],BL [ACC 3,TLETREC,NIL,ACC 2,ACC 1,CAR,CONS,CONS,ACC 1,CDR,CONS,TAP]]])]
-
-
-
--}
