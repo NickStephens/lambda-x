@@ -141,6 +141,8 @@ comp expr = case expr of
 		ce <- comp e
 		put env
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
+	OPR o -> do
+		return [opt o]
 
 params [] = return ()
 params (p:ps)= do

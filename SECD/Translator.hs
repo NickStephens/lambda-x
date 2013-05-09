@@ -1,6 +1,6 @@
 import PCONS
 import SEC
-import AbstractSyntax
+import AbstractSyntax 
 import qualified Data.Map as Map
 import Control.Monad.State
 import Data.List
@@ -10,7 +10,20 @@ import Text.ParserCombinators.Parsec hiding (State)
 
 
 
-
+processParams :: [Alias] -> [Alias]
+processParams [] = []
+processParams ((NoRec nm prms e):as) = NoRec nm [] (placeParams prms e) : processParams as
+	where   
+		placeParams [] e = e
+		placeParams (x:xs) e = Lam x $ placeParams xs e
+processParams ((Recr nm prms e):as) = Recr nm [] (placeParams prms e) : processParams as
+	where   
+		placeParams [] e = e
+		placeParams (x:xs) e = Lam x $ placeParams xs e
+processParams ((TRec nm prms e):as) = TRec nm [] (placeParams prms e) : processParams as
+	where   
+		placeParams [] e = e
+		placeParams (x:xs) e = Lam x $ placeParams xs e
 
 funcStream [p] = case p of
 	NoRec nm prms e -> do
@@ -62,11 +75,15 @@ transv v = evalStateT (trv v) (Map.empty,1)
 trv v = do
 	tr <- trans v
 	return tr
+
+-- translate
 transl =  evalStateT trns (Map.empty, 1)
 trns = do
 	prg <- mind "pecan.txt"
-	trs <- funcStream prg
+	trs <- funcStream (processParams prg)
 	return trs
+
+-- compile
 compl = evalStateT silt (Map.empty, 1)
 silt = do
 	prg <- mind "pecan.txt"
@@ -74,6 +91,7 @@ silt = do
 	cm  <- comp trs
 	return cm
 
+-- compile translation
 stilt ts = evalStateT (stm ts) (Map.empty, 1)
 stm ts = do
 	cm <- comp ts
@@ -108,16 +126,17 @@ prg = do
 
 trans :: Expr -> TRN EXP
 trans expr = case expr of
-	App a b -> do
+	App a b -> do -- look for operators
 		b' <- trans b
 		case a of
 			App x y -> do
 				y' <- trans y
 				case x of
 					Op op -> return $ BinOp (opm op) y' b'
-					Var x -> do
+					Var x -> do 
 						(env,n) <- get
-						if Map.member x env
+						if Map.member x env -- if a x is a 
+						-- recognized key
 							then do
 								let cnt = if n==1 then CNT else TNT
 								return $ cnt b'
@@ -125,7 +144,7 @@ trans expr = case expr of
 					_ -> do
 						x' <- trans x
 						return $ Apply (Apply x' y') b'
-			Op op -> return $ UnOp (upm op) b'
+			Op op -> return $ UnOp (opm op) b'
 			Var x -> do
 				(env,n) <- get
 				if Map.member x env
@@ -168,6 +187,7 @@ trans expr = case expr of
 			_ -> do
 				te <- trans e
 				return $  Lambda [x] te
+	Op o -> return $ OPR $ opm o 
 
 {-	Lam x e -> do
 		te <- trans e
@@ -206,9 +226,6 @@ opm op = case op of
 	LTo -> Lt
 	GTo -> Gt
 	EQo -> Equ
-
-
-upm op = case op of
 --	NOT -> Not
 	CARo -> Car
 	CDRo -> Cdr
@@ -238,6 +255,7 @@ cmp = do
 			liftIO $ print cp
 			return ()
 
+-- parses the file and returns the resulst in a transformer monad
 mind :: String -> TRN [Alias]
 mind file = do
 	f <- liftIO $ parseFromFile program file

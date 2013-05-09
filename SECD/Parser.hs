@@ -305,4 +305,3 @@ eol = do { try (string "\n\r") <|> try (string "\r\n")
 
 end = do 
 	eol <|> (many space >> eof)
->>>>>>> f17f6c091ad15d92822fa5db7151047a742f3d15
