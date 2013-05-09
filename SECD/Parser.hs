@@ -7,7 +7,7 @@ import Text.ParserCombinators.Parsec
 import qualified Text.Parsec.Expr as EX
 import Text.Parsec.Error
 
-main file = do 
+mane file = do 
 	f <- parseFromFile program file
 	case (f) of
 		Left err -> print err
@@ -23,7 +23,7 @@ program = do
 
 {- ALIAS -}
 
-alias = try (trec) <|> try (rec) <|> norec 
+alias = try (trec) <|> try (rec) <|> norec
 
 norec = do
 	(als, params, exp) <- acenter
@@ -39,7 +39,7 @@ rec = do
 	string "Letrec"
 	many1 space
 	(als, params, exp) <- acenter
-	return $ Rec als params exp
+	return $ Recr als params exp
 
 acenter = do
 	als <- name
@@ -70,7 +70,8 @@ stratum    = primary `chainl1` (binary cons)
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
-term = try (caseof) <|> try (conditional) <|> try (parexpression) <|> paroperator <|>  variable <|> lambda <|> value
+term = plet <|> conditional <|> try (parexpression) <|>
+		try (paroperator) <|> variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -150,59 +151,7 @@ conditional = do
 	string "else"	
 	many1 space
 	branch2 <- parexpression
-	return $ Cond bool branch1 branch2
-
-{- CASE OF -}
-caseof = do
-	string "case"
-	many1 space
-	test <- parexpression
-	many1 space
-	string "of"
-	many1 space
-	col <- cases
-	return $ Case test  col	
-
-cases = many1 pcase
-
-pcase = do
-	pat <- pattern
-	many space
-	string "->"	
-	many space
-	exp <- parexpression
-	many space
-	return (pat, exp)
-
-{- PATTERNS -}
-
-pattern = try (listpattern) <|> pairpattern <|> symbol
-
-listpattern = do
-	char '('
-	many space
-	head <- name	
-	many space
-	char ':'
-	many space
-	tail <- name
-	char ')'
-	return $ List (head, tail)
-
-pairpattern = do
-	char '('
-	many space
-	fst <- name
-	many space
-	char ','
-	many space
-	snd <- name
-	char ')'	
-	return $ Pair (fst, snd)
-
-symbol = do
-	nm <- name
-	return $ Symbol nm
+	return $ COND bool branch1 branch2
 
 {- VALUES -}
 
@@ -216,20 +165,20 @@ pair = do
 	many space
 	e2 <- expression
 	char ')'
-	return $ Val $ ValPair (e1, e2)
+	return $ Pr (e1:[e2])
 
 list = do
 	char '['
 	elst <- (many space >> expression) `sepBy` (char ',')
 	char ']'
-	return $ Val $ ValList elst
+	return $ Lst elst
 
 number = try (double) <|> integer
 
 integer :: Parser Expr
 integer = do
 	int <- many1 digit
-	return $ Val . ValInt $ toInt 0 int
+	return $ Val . ValInt $ toInteger $ toInt 0 int
 
 double :: Parser Expr
 double = do
@@ -296,11 +245,11 @@ div = do
 
 lt = do
 	char '<'
-	return $ Op LT
+	return $ Op LTo
 
 gt = do
 	char '>'
-	return $ Op GT 
+	return $ Op GTo
 
 elt = do
 	string "<="
@@ -312,7 +261,7 @@ egt = do
 
 eq = do
 	string "=="
-	return $ Op EQ
+	return $ Op EQo
 
 neq = do
 	string "/="
@@ -327,17 +276,16 @@ notop = do
 
 car = do
 	char '^'
-	return $ Op CAR
-
+	return $ Op CARo
 
 cdr = do
 	char '~'
-	return $ Op CDR
+	return $ Op CDRo
 
 
 cons = do
 	char ':'
-	return $ Op CONS 
+	return $ Op CONSo
 
 {- CASE -}
 
@@ -357,3 +305,4 @@ eol = do { try (string "\n\r") <|> try (string "\r\n")
 
 end = do 
 	eol <|> (many space >> eof)
+>>>>>>> f17f6c091ad15d92822fa5db7151047a742f3d15

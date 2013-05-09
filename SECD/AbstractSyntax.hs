@@ -3,23 +3,25 @@ module AbstractSyntax where
 type Program  = [Alias]
 
 type Name     = String
-data Alias    = NoRec Name [Name] Expr | Rec Name [Name] Expr | TRec Name [Name] Expr
-		deriving (Show, Eq)
+data Alias    = NoRec Name [Name] Expr | Recr Name [Name] Expr | TRec Name [Name] Expr
+		deriving (Show, Eq, Read)
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
-		Case Expr [(Pattern, Expr)] | Let Alias Expr |
-		Cond Expr Expr Expr | Op Operator | Val Value 		deriving (Show, Eq)
+		Case Expr [(Pattern, Expr)] | Let Alias Expr | COND Expr Expr Expr |
+		Op Operator | Val Value | TERM | Lst [Expr] | Pr [Expr]
+			deriving (Show, Eq, Read)
 
 data Operator = ADD | SUB | MUL | DIV |
-		LT | GT | ELT | EGT | EQ | NEQ | NOT |	
-		CDR | CAR | CONS
-		deriving (Show, Eq)
+		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |	
+		CDRo | CARo | CONSo
+		deriving (Show, Eq, Read)
 
-data Pattern  = List (Name, Name) | Pair (Name, Name) | Symbol Name
-		deriving (Show, Eq)
+data Pattern  = List (Name, Name) | Pair (Name, Name)
+		deriving (Show, Eq, Read)
 
-data Value    = ValInt Int | ValDouble Double | ValPair (Expr, Expr) | ValList [Expr] | ValBool Bool | ValChar Char
-		deriving (Show, Eq)
+data Value    = ValInt Integer | ValDouble Double |
+				ValBool Bool | ValChar Char
+					deriving (Show, Eq, Read)
 
 data Number   = NumInt Int | NumDouble Double
-		deriving (Show, Eq)
+		deriving (Show, Eq, Read)
