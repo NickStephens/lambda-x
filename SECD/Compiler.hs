@@ -23,37 +23,40 @@ comp expr = case expr of
 		--x is a list of names that must be reversed to get the right ACC numberings
 		params (reverse x)
 		(en,_) <- get
-		liftIO $ print en
-		liftIO $ putStrLn "L"
+--		liftIO $ print en
+--		liftIO $ putStrLn "L: "
+--		liftIO $ print e
 		e' <- comp e
-		liftIO $ putStrLn "LO"
+--		liftIO $ putStrLn "LO: "
+--		liftIO $ print e
 		put env
 		return [BL (e' ++ [RTN]),CLOS]
 	Apply f v -> do
---		env <- get
 		(e,_) <- get
-		liftIO $ print e
-		liftIO $ putStrLn "AF"
+--		liftIO $ print e
+--		liftIO $ putStrLn "AF: "
+--		liftIO $ print f
 		cf <- comp f --BL;CLOS
-		liftIO $ putStrLn "AFO"
---		modify (\(e,n) -> (Map.empty,1))
+--		liftIO $ putStrLn "AFO: "
+--		liftIO $ print f
 		(e,_) <- get
-		liftIO $ print e
-		liftIO $ putStrLn "AV"
+--		liftIO $ print e
+--		liftIO $ putStr "AV: "
+--		liftIO $ print v
 		cv <- comp v --LD
-		liftIO $ putStrLn "AVO"
---		put env
+--		liftIO $ putStr "AVO: "
+--		liftIO $ print v
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Variable x -> do
 		(es,_) <- get
-		liftIO$putStr ("V "++x++" <- ")
+--		liftIO$print es
+--		liftIO$putStr ("V "++x++" <- ")
 		v <- deBruijn x es
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		(e,n) <- get
---		modify (\(e,n) -> (Map.empty,1))
-		liftIO $ print e
-		liftIO $ putStrLn "B"
+--		liftIO $ print e
+--		liftIO $ putStrLn "B"
 		ce1 <- comp e1
 		ce2 <- comp e2
 		put (e,n)
@@ -68,30 +71,25 @@ comp expr = case expr of
 		AC c -> return [LDC (C c)]
 	Cond pred th el -> do
 		env <- get
---		modify (\(e,n) -> (Map.empty,1))
 		p <- comp pred
---		modify (\(e,n) -> (Map.empty,1))
 		th' <- comp th
---		modify (\(e,n) -> (Map.empty,1))
 		el' <- comp el
 		put env
 		return $ p ++ [SEL] ++ [BL th'] ++ [BL el']
-
 	ConS e1 e2 -> do
 		env <- get
---		modify (\(e,n) -> (Map.empty,1))
 		ce1 <- comp e1
---		modify (\(e,n) -> (Map.empty,1))
 		ce2 <- comp e2
 		put env
 		return $ ce1++ce2++[CONS]
 	Lett nm e1 e2 -> do
---		env <- get
---		modify (\(e,n) -> (Map.empty,1))
+		params [nm]
+--		liftIO $ putStr ("Let: "++nm++" = ")
+--		liftIO $ print e1
 		e1' <- comp e1
---		modify (\(e, v) -> (Map.insert nm v e, v+1))
+--		liftIO $ putStr "In: "
+--		liftIO $ print e2
 		e2' <- comp e2
---		put env
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
 	CLst xs -> do
 		xs' <- mapM comp xs
@@ -107,49 +105,26 @@ comp expr = case expr of
 	Def ps e -> do
 		params (reverse ps)
 		ce <- comp e
---		modify (\(e,n) -> (Map.empty,1))
 		return [BL (ce ++ [RTN]),CLOS]
-
---		params (reverse x)
---		e' <- comp e
---		modify (\(e,n) -> (Map.empty,1))
---		return [BL (e' ++ [RTN]),CLOS]
 	RDef ps e -> do
 		env <- get
---		modify (\(e, _) -> (Map.empty,2))
 		params ps
 		ce <- comp e
 		put env
 		return ce
-
-	Skp -> return [SKP]
 	RCL pred th el -> do --recursive call
---		env <- get
---		modify (\(e, _) -> (Map.empty,2))
 		p <- comp pred
---		modify (\(e, _) -> (Map.empty,2))
 		trm <- comp th
---		modify (\(e, _) -> (Map.empty,2))
 		cnt <- comp el
---		put env
 		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]
 	TRM e -> do --terminate
---		env <- get
---		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
---		put env
 		return $ ce
 	CNT e -> do --continue
---		env <- get
---		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
---		put env
 		return $ ce++[RAP]
 	TNT e -> do --tail continue
---		env <- get
---		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
---		put env
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
 
 deBruijn x (e:es) = do
@@ -158,19 +133,8 @@ deBruijn x (e:es) = do
 			v <- deBruijn x es
 			return $ v+1
 		Just v -> do
-			liftIO$print v
+--			liftIO$print v
 			return $ v
-{-index p [] = do
-index p (e:es) = 
-	case Map.lookup p env of
-		Nothing -> do
-			put $ (Map.insert p vn env:es, vn+1)
-			params ps
-		Just v -> do
-	--		put $ (Map.insert p vn env, vn)
-			params ps
--}
-
 
 params [] = return ()
 params ps = do
@@ -197,7 +161,6 @@ opt o = case o of
 	Cons -> CONS
 	_ -> OP o
 
---runt p = let p' = compile p in runtest ([], [], p')
 
 
 
