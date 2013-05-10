@@ -9,15 +9,17 @@ import Data.List
 
 
 
-type TRN = StateT (Scope, Int) IO
+type TRN = StateT ([Scope], Int) IO
 
 type Scope = Map.Map String Int
 type CP = State (Scope, Int)
 
+--m = (\x.\y.(\x.\y.x-y) x y) 5 7;
 
 comp :: EXP -> TRN [Code]
 comp expr = case expr of
 	Lambda x e -> do
+		env <- get
 		--x is a list of names that must be reversed to get the right ACC numberings
 		params (reverse x)
 		(en,_) <- get
@@ -25,7 +27,7 @@ comp expr = case expr of
 		liftIO $ putStrLn "L"
 		e' <- comp e
 		liftIO $ putStrLn "LO"
-	--	modify (\(e,n) -> (Map.empty,1))
+		put env
 		return [BL (e' ++ [RTN]),CLOS]
 	Apply f v -> do
 --		env <- get
@@ -43,16 +45,10 @@ comp expr = case expr of
 --		put env
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Variable x -> do
-		(e,_) <- get
-		liftIO $ print e
-		liftIO $ putStrLn ("V "++x)
-		(env, vn) <- get
-		case Map.lookup x env of
-			Nothing -> do
-				put $ (Map.insert x vn env, vn+1)
-				return [ACC vn]
-			Just v -> do
-				return [ACC v]
+		(es,_) <- get
+		liftIO$putStr ("V "++x++" <- ")
+		v <- deBruijn x es
+		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		(e,n) <- get
 --		modify (\(e,n) -> (Map.empty,1))
@@ -72,30 +68,30 @@ comp expr = case expr of
 		AC c -> return [LDC (C c)]
 	Cond pred th el -> do
 		env <- get
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		p <- comp pred
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		th' <- comp th
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		el' <- comp el
 		put env
 		return $ p ++ [SEL] ++ [BL th'] ++ [BL el']
 
 	ConS e1 e2 -> do
 		env <- get
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		ce1 <- comp e1
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		ce2 <- comp e2
 		put env
 		return $ ce1++ce2++[CONS]
 	Lett nm e1 e2 -> do
-		env <- get
-		modify (\(e,n) -> (Map.empty,1))
+--		env <- get
+--		modify (\(e,n) -> (Map.empty,1))
 		e1' <- comp e1
-		modify (\(e, v) -> (Map.insert nm v e, v+1))
+--		modify (\(e, v) -> (Map.insert nm v e, v+1))
 		e2' <- comp e2
-		put env
+--		put env
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
 	CLst xs -> do
 		xs' <- mapM comp xs
@@ -111,7 +107,7 @@ comp expr = case expr of
 	Def ps e -> do
 		params (reverse ps)
 		ce <- comp e
-		modify (\(e,n) -> (Map.empty,1))
+--		modify (\(e,n) -> (Map.empty,1))
 		return [BL (ce ++ [RTN]),CLOS]
 
 --		params (reverse x)
@@ -120,7 +116,7 @@ comp expr = case expr of
 --		return [BL (e' ++ [RTN]),CLOS]
 	RDef ps e -> do
 		env <- get
-		modify (\(e, _) -> (Map.empty,2))
+--		modify (\(e, _) -> (Map.empty,2))
 		params ps
 		ce <- comp e
 		put env
@@ -128,38 +124,65 @@ comp expr = case expr of
 
 	Skp -> return [SKP]
 	RCL pred th el -> do --recursive call
-		env <- get
-		modify (\(e, _) -> (Map.empty,2))
+--		env <- get
+--		modify (\(e, _) -> (Map.empty,2))
 		p <- comp pred
-		modify (\(e, _) -> (Map.empty,2))
+--		modify (\(e, _) -> (Map.empty,2))
 		trm <- comp th
-		modify (\(e, _) -> (Map.empty,2))
+--		modify (\(e, _) -> (Map.empty,2))
 		cnt <- comp el
-		put env
+--		put env
 		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]
 	TRM e -> do --terminate
-		env <- get
-		modify (\(e, _) -> (Map.empty,2))
+--		env <- get
+--		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
-		put env
+--		put env
 		return $ ce
 	CNT e -> do --continue
-		env <- get
-		modify (\(e, _) -> (Map.empty,2))
+--		env <- get
+--		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
-		put env
+--		put env
 		return $ ce++[RAP]
 	TNT e -> do --tail continue
-		env <- get
-		modify (\(e, _) -> (Map.empty,2))
+--		env <- get
+--		modify (\(e, _) -> (Map.empty,2))
 		ce <- comp e
-		put env
+--		put env
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
 
+deBruijn x (e:es) = do
+	case Map.lookup x e of
+		Nothing -> do
+			v <- deBruijn x es
+			return $ v+1
+		Just v -> do
+			liftIO$print v
+			return $ v
+{-index p [] = do
+index p (e:es) = 
+	case Map.lookup p env of
+		Nothing -> do
+			put $ (Map.insert p vn env:es, vn+1)
+			params ps
+		Just v -> do
+	--		put $ (Map.insert p vn env, vn)
+			params ps
+-}
+
+
 params [] = return ()
-params (p:ps)= do
-	modify $ \(env, vn) -> (Map.insert p vn env, vn+1)
-	params ps
+params ps = do
+	modify (\(e,n) -> (Map.empty:e,1))
+	mapM index ps
+	return ()
+index p = do
+	(e:es,vn) <- get
+	put (Map.insert p vn e:es, vn+1)
+
+
+
 
 lstVal v = do
 	case v of

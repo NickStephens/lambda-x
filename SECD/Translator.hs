@@ -15,26 +15,26 @@ funct p = case p of
 		te <- trans e
 		return $ te
 	Recr nm prms e -> do
-			(env,_) <- get
-			put $ (Map.insert nm 1 env, 1)
+			(env:es,_) <- get
+			put $ (Map.insert nm 1 env:es, 1)
 			case e of
 				COND p e1 e2 -> do
 					pred <- trans p
 					trm <- trans e1
 					cnt <- trans e2 --recont e2
 					let rec = RCL pred (TRM trm) cnt
-					modify (\_ -> (Map.empty,1))
+					modify (\_ -> ([Map.empty],1))
 					return $ RDef prms rec
 	TRec nm prms e -> do
-		(env,_) <- get
-		put $ (Map.insert nm 1 env, 2)
+		(env:es,_) <- get
+		put $ (Map.insert nm 1 env:es, 2)
 		case e of
 			COND p e1 e2 -> do
 				pred <- trans p
 				trm <- trans e1
 				cnt <- trans e2 --recont e2
 				let rec = RCL pred (TRM trm) cnt
-				modify (\_ -> (Map.empty,1))
+				modify (\_ -> ([Map.empty],1))
 				return $ RDef prms rec
 funcStream [p] = funct p
 funcStream (p:ps) = do
@@ -51,19 +51,19 @@ funcStream (p:ps) = do
 
 
 
-transl =  evalStateT trns (Map.empty, 1)
+transl =  evalStateT trns ([Map.empty], 1)
 trns = do
 	prg <- mind "pecan.txt"
 	trs <- funcStream prg
 	return trs
-compl = evalStateT silt (Map.empty, 1)
+compl = evalStateT silt ([Map.empty], 1)
 silt = do
 	prg <- mind "pecan.txt"
 	trs <- funcStream prg
 	cm  <- comp trs
 	return cm
 
-prog = evalStateT prg (Map.empty,1)
+prog = evalStateT prg ([Map.empty],1)
 prg = do
 	prg <- mind "pecan.txt"
 	p <- funcStream prg
@@ -79,7 +79,7 @@ mind file = do
 	case f of
 		Right res -> return res
 
-pecan = evalStateT pcn (Map.empty,1)
+pecan = evalStateT pcn ([Map.empty],1)
 pcn = do
 	prg <- mind "pecan.txt"
 	liftIO$ print prg
@@ -97,7 +97,7 @@ main = fact 5;
 
 trans :: Expr -> TRN EXP
 trans expr = case expr of
-	App a b -> do
+{-	App a b -> do
 		b' <- trans b
 		case a of
 			App x y -> do
@@ -105,7 +105,7 @@ trans expr = case expr of
 				case x of
 					Op op -> return $ BinOp (opm op) y' b'
 					Var x -> do
-						(env,n) <- get
+						(env:es,n) <- get
 						if Map.member x env
 							then do
 								let cnt = if n==1 then CNT else TNT
@@ -116,7 +116,7 @@ trans expr = case expr of
 						return $ Apply (Apply x' y') b'
 			Op op -> return $ UnOp (upm op) b'
 			Var x -> do
-				(env,n) <- get
+				(env:es,n) <- get
 				if Map.member x env
 					then do
 						let cnt = if n==1 then CNT else TNT
@@ -125,15 +125,15 @@ trans expr = case expr of
 			_ -> do
 				a' <- trans a
 				return $ Apply a' b'
-
-{-	App x y -> do
+-}
+	App x y -> do
 		ty <- trans y
 		case x of
 			Op op -> return $ Lambda [""] (BinOp (opm op) ty (Variable ""))
 			_     -> do
 				tx <- trans x
 				return $ Apply tx ty
--}
+
 	COND p e1 e2 -> do
 		tp <- trans p
 		te1 <- trans e1
@@ -203,7 +203,7 @@ upm op = case op of
 	CDRo -> Cdr
 
 
-translate expr = evalStateT (trans expr) (Map.empty, 1)
+translate expr = evalStateT (trans expr) ([Map.empty], 1)
 
 
 
