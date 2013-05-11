@@ -44,7 +44,7 @@ rec = do
 acenter = do
 	als <- name
 	many1 space
-	params <- pattern `sepEndBy` (char ' ')
+	params <- name `sepEndBy` (char ' ')
 	many space
 	char '='
 	many space
@@ -71,7 +71,7 @@ primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
 term = plet <|> conditional <|> try (parexpression) <|>
-		try (paroperator) <|> variable <|> lambda <|> value
+		try (paroperator) <|> try (value) <|> variable <|> lambda 
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -263,21 +263,18 @@ pchar = do
 
 {- OPERATORS -}
 
-operator = do
-	relop <|> addop <|> mulop <|> listop <?> "operator"
+operator = relop <|> addop <|> mulop <|> listop <|> logop <?> "operator"
 
-relop = do
-	try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> neq
+logop = andop <|> orop <?> "logical operator"
+
+relop = try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> neq
 	<?> "relational operator"
 
-listop = do
-	car <|> cdr <?> "list operator"
+listop = car <|> cdr <?> "list operator"
 
-addop = do
-	add <|> sub <?> "addition operator"
+addop = add <|> sub <?> "addition operator"
 
-mulop = do
-	mul <|> div <?> "multiplicative operator"
+mulop = mul <|> div <?> "multiplicative operator"
 
 -- ARITHMENTIC OPERATORS
 add = do
@@ -345,6 +342,15 @@ cons = do
 	char ':'
 	return $ Op CONSo
 
+-- LOGICAL OPERATORS
+
+andop = do 
+	string "&&" 
+	return $ Op AND
+
+orop = do
+	string "||"
+	return $ Op OR
 
 {- INTERMEDIATE PARSING -}
 name :: Parser Name

@@ -2,8 +2,10 @@ module AbstractSyntax where
 
 type Program  = [Alias]
 
+type Params = [Name]
 type Name     = String
-data Alias    = NoRec Name [Pattern] Expr | Recr Name [Pattern] Expr | TRec Name [Pattern] Expr
+
+data Alias    = NoRec Name Params Expr | Recr Name Params Expr | TRec Name Params Expr
 		deriving (Show, Eq, Read)
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
@@ -13,7 +15,8 @@ data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 
 data Operator = ADD | SUB | MUL | DIV |
 		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |
-		CDRo | CARo | CONSo
+		CDRo | CARo | CONSo |
+		AND | OR
 		deriving (Show, Eq, Read)
 
 data Pattern  = List (Name, Name) | Pair (Name, Name) | Symbol Name | ValPattern Expr 

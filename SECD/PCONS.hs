@@ -20,6 +20,10 @@ data EXP =
 				deriving (Show, Eq, Ord)
 
 type Name = String
+
+data PATTERN = LISTP (Name, Name) | PAIRP (Name, Name) | SYMP Name
+				deriving (Show, Eq, Ord)
+
 type Params = [Name]
 
 data AVal = AD Double | AI Integer | AC Char | AB Bool
