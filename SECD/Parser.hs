@@ -178,29 +178,25 @@ pcase = do
 
 {- PATTERNS -}
 
-pattern = try (listpattern) <|> pairpattern <|> symbol <|> valuePattern
+pattern = try (listpattern) <|> try (pairpattern) <|> symbol <|> valuePattern
 
 listpattern = do
         char '('
         many space
-        head <- name
+        head <- pattern
         many space
         char ':'
         many space
-        tail <- name
+        tail <- pattern
         char ')'
         return $ List (head, tail)
 
 pairpattern = do
         char '('
-        many space
-        fst <- name
-        many space
-        char ','
-        many space
-        snd <- name
+	conts <- (many space >> pattern) `sepBy` (char ',')
+	many space
         char ')'
-        return $ Pair (fst, snd)
+        return $ Pair conts
 
 symbol = do
         nm <- name
@@ -218,12 +214,9 @@ value = pair <|> list <|> integer <|> pchar <|> bool
 pair = do
 	char '('
 	many space
-	e1 <- expression
-	char ','
-	many space
-	e2 <- expression
+	elst <- (many space >> expression) `sepBy` (char ',')
 	char ')'
-	return $ Pr (e1:[e2])
+	return $ Pr elst
 
 list = do
 	char '['

@@ -19,7 +19,7 @@ data Operator = ADD | SUB | MUL | DIV |
 		AND | OR
 		deriving (Show, Eq, Read)
 
-data Pattern  = List (Name, Name) | Pair (Name, Name) | Symbol Name | ValPattern Expr 
+data Pattern  = List (Pattern, Pattern) | Pair [Pattern] | Symbol Name | ValPattern Expr 
 		deriving (Show, Eq, Read)
 
 data Value    = ValInt Integer | ValDouble Double |
