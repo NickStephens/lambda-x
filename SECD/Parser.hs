@@ -44,7 +44,7 @@ rec = do
 acenter = do
 	als <- name
 	many1 space
-	params <- name `sepEndBy` (char ' ')
+	params <- pattern `sepEndBy` (char ' ')
 	many space
 	char '='
 	many space

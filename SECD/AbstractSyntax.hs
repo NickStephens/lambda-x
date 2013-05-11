@@ -2,7 +2,7 @@ module AbstractSyntax where
 
 type Program  = [Alias]
 
-type Params = [Name]
+type Params = [Pattern]
 type Name     = String
 
 data Alias    = NoRec Name Params Expr | Recr Name Params Expr | TRec Name Params Expr
