@@ -35,93 +35,59 @@ placeParams (x:xs) e = case x of
 -}
 			
 
-funcStream [p] = case p of
+funct p = case p of
 	NoRec nm prms e -> do
 		te <- trans e
 		return $ te
 	Recr nm prms e -> do
+			(env:es,_) <- get
+			put $ (Map.insert nm 1 env:es, 1)
+			case e of
+				COND p e1 e2 -> do
+					pred <- trans p
+					trm <- trans e1
+					cnt <- trans e2 --recont e2
+					let rec = RCL pred (TRM trm) cnt
+					modify (\_ -> ([Map.empty],1))
+					return $ RDef prms rec
+	TRec nm prms e -> do
+		(env:es,_) <- get
+		put $ (Map.insert nm 1 env:es, 2)
 		case e of
 			COND p e1 e2 -> do
 				pred <- trans p
 				trm <- trans e1
 				cnt <- trans e2 --recont e2
-				let rec = RCL pred (TRM trm) (CNT cnt)
-				return $ Def prms rec
+				let rec = RCL pred (TRM trm) cnt
+				modify (\_ -> ([Map.empty],1))
+				return $ RDef prms rec
+funcStream [p] = funct p
 funcStream (p:ps) = do
+	let nm = nameOf p
 	cont <- funcStream ps
-	case p of
-		NoRec nm prms e -> do
-			te <- trans e
-			return $ Lett nm (Def prms te) cont
- 
-		Recr nm prms e -> do
-			(env,_) <- get
-			put $ (Map.insert nm 1 env, 1)
-			case e of
-				COND p e1 e2 -> do
-					pred <- trans p
-					trm <- trans e1
-					cnt <- trans e2 --recont e2
-					let rec = RCL pred (TRM trm) cnt
-					modify (\_ -> (Map.empty,1))
-					return $ Lett nm (RDef prms rec) cont
-
-		TRec nm prms e -> do
-			(env,_) <- get
-			put $ (Map.insert nm 1 env, 2)
-			case e of
-				COND p e1 e2 -> do
-					pred <- trans p
-					trm <- trans e1
-					cnt <- trans e2 --recont e2
-					let rec = RCL pred (TRM trm) cnt
-					modify (\_ -> (Map.empty,1))
-					return $ Lett nm (RDef prms rec) cont
+	fnc <- funct p
+	return $ Lett nm fnc cont
+		where nameOf p = case p of
+			NoRec n _ _ -> n
+			Recr  n _ _ -> n
+			TRec  n _ _ -> n		
 
 
 
 
-transv v = evalStateT (trv v) (Map.empty,1)
-trv v = do
-	tr <- trans v
-	return tr
-
--- translate
-transl =  evalStateT trns (Map.empty, 1)
+transl =  evalStateT trns ([Map.empty], 1)
 trns = do
 	prg <- mind "pecan.txt"
 	trs <- funcStream (processParams prg)
 	return trs
-
--- compile
-compl = evalStateT silt (Map.empty, 1)
+compl = evalStateT silt ([Map.empty], 1)
 silt = do
 	prg <- mind "pecan.txt"
 	trs <- funcStream prg
 	cm  <- comp trs
 	return cm
 
--- compile translation
-stilt ts = evalStateT (stm ts) (Map.empty, 1)
-stm ts = do
-	cm <- comp ts
-	return cm
-
-
-
---recont e = do
-{-
-BinOp Mul (Variable "n") (Apply (Variable "fact") (BinOp Sub (Variable "n") (Value (AI 1))))
-
-[ACC 1,NIL,LDC (I 1),ACC 1,OP Sub,CONS,APP,ACC 1,OP Mul]
-
-(BinOp Mul (Variable "c") (CNT (Cons ( BinOp Sub (Variable "c") (Value$AI 1) ) Nil)))
-
-
-[LDC (I 1),ACC 1,OP Sub,NIL,CONS,RAP,ACC 1,OP Mul]
--}
-
-prog = evalStateT prg (Map.empty,1)
+prog = evalStateT prg ([Map.empty],1)
 prg = do
 	prg <- mind "pecan.txt"
 	p <- funcStream prg
@@ -130,23 +96,38 @@ prg = do
 --	liftIO $ print e
 	liftIO $ run e
 	return ()
+
+mind :: String -> TRN [Alias]
+mind file = do
+	f <- liftIO $ parseFromFile program file
+	case f of
+		Right res -> return res
+
+pecan = evalStateT pcn ([Map.empty],1)
+pcn = do
+	prg <- mind "pecan.txt"
+	liftIO$ print prg
+	return ()
+
+--recont e = do
+{-
+Letrec fact n = if (n==1) then (1) else (n*(fact ((n-1):[])));
+main = fact 5;
+-}
+
 --(CNT (BinOp Cons (BinOp Sub (Variable "n") (Value (AI 1))) (LSD [])))
 --Tletrec fact c a = if (n==1) then (a) else (fact ((c-1):(a*c):[]));
 
 
 trans :: Expr -> TRN EXP
 trans expr = case expr of
-	App a b -> do -- look for operators
-		b' <- trans b
+{-
+b' <- trans b
 		case a of
 			App x y -> do
 				y' <- trans y
 				case x of
 					Op op -> return $ BinOp (opm op) y' b'
-					Var x -> do 
-						(env,n) <- get
-						if Map.member x env -- if a x is a 
-						-- recognized key
 							then do
 								let cnt = if n==1 then CNT else TNT
 								return $ cnt b'
@@ -156,7 +137,7 @@ trans expr = case expr of
 						return $ Apply (Apply x' y') b'
 			Op op -> return $ UnOp (opm op) b'
 			Var x -> do
-				(env,n) <- get
+				(env:es,n) <- get
 				if Map.member x env
 					then do
 						let cnt = if n==1 then CNT else TNT
@@ -165,15 +146,15 @@ trans expr = case expr of
 			_ -> do
 				a' <- trans a
 				return $ Apply a' b'
-
-{-	App x y -> do
+-}
+	App x y -> do
 		ty <- trans y
 		case x of
 			Op op -> return $ Lambda [""] (BinOp (opm op) ty (Variable ""))
 			_     -> do
 				tx <- trans x
 				return $ Apply tx ty
--}
+
 	COND p e1 e2 -> do
 		tp <- trans p
 		te1 <- trans e1
@@ -241,65 +222,4 @@ opm op = case op of
 	CDRo -> Cdr
 
 
-translate expr = evalStateT (trans expr) (Map.empty, 1)
-
-stamp = evalStateT cmpl (Map.empty,1)
-camp = evalStateT cmp (Map.empty,1)
-
-cmp :: TRN ()
-cmp = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			liftIO $ print tr
-			liftIO $ putStrLn ""
-			cp <- comp tr
-			liftIO $ print cp
-			return ()
-		Recr _ _ ex -> do
-			tr <- trans ex
-			liftIO $ print tr
-			liftIO $ putStrLn ""
-			cp <- comp tr
-			liftIO $ print cp
-			return ()
-
--- parses the file and returns the resulst in a transformer monad
-mind :: String -> TRN [Alias]
-mind file = do
-	f <- liftIO $ parseFromFile program file
-	case f of
-		Right res -> return res
-
-cmpl :: TRN ()
-cmpl = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			cp <- comp tr
-			liftIO$ run cp
-			return ()
-
-tranny = evalStateT trny (Map.empty, 1)
-
-trny = do
-	prg <- mind "pecan.txt"
-	case head prg of
-		NoRec _ _ ex -> do
-			tr <- trans ex
-			liftIO$ print tr
-			return ()
-
-
-pecan = evalStateT pcn (Map.empty,1)
-pcn = do
-	prg <- mind "pecan.txt"
-	liftIO$ print prg
-	return ()
-
-
-
-
-
+translate expr = evalStateT (trans expr) ([Map.empty], 1)
