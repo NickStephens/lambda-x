@@ -55,18 +55,9 @@ acenter = do
 -- binary sugar and operator application has higher precedence 
 -- then functional application
 
-{-
-expression = EX.buildExpressionParser table term
-
-table = [ [EX.Infix application EX.AssocLeft],
-	  [EX.Infix (binary mulop) EX.AssocLeft],
-	  [EX.Infix (binary addop) EX.AssocLeft],
-	  [EX.Infix (binary cons) EX.AssocLeft, EX.Prefix (unary car), EX.Prefix (unary cdr)],
-	  [EX.Infix (binary relop) EX.AssocLeft, EX.Prefix (unary notop)] ]
--}
-
-expression = stratum `chainl1` (binary relop)
-stratum    = primary `chainl1` (binary cons)
+expression = logical `chainl1` (binary logop)
+logical    = stratum `chainl1` (binary relop) <|> unary (notop) stratum
+stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
@@ -97,9 +88,10 @@ binary f = do
 	many space
 	return (\x -> \y -> (App (App op x) y))
 
-unary f = do
+unary f par = do
 	op <- f
-	return (\x -> (App op x))
+	exp <- par
+	return (App op exp)
 
 {- APPLICATION -}
 application = do
