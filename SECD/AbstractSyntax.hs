@@ -16,10 +16,11 @@ data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 data Operator = ADD | SUB | MUL | DIV |
 		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |
 		CDRo | CARo | CONSo |
+		FST | SND |
 		AND | OR
 		deriving (Show, Eq, Read)
 
-data Pattern  = List (Pattern, Pattern) | Pair [Pattern] | Symbol Name | ValPattern Expr 
+data Pattern  = List (Pattern, Pattern) | Pair (Pattern, Pattern) | Symbol Name | ValPattern Expr 
 		deriving (Show, Eq, Read)
 
 data Value    = ValInt Integer | ValDouble Double |

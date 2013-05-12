@@ -61,8 +61,9 @@ stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
-term = plet <|> conditional <|> try (parexpression) <|>
-		try (paroperator) <|> try (value) <|> variable <|> lambda 
+term = try (plet) <|> try (conditional) <|> try (caseof) 
+		<|> try (parexpression) <|> try (paroperator) <|> try (value) 
+		<|> variable <|> lambda 
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do
@@ -185,10 +186,13 @@ listpattern = do
 
 pairpattern = do
         char '('
-	conts <- (many space >> pattern) `sepBy` (char ',')
 	many space
+	p1 <- pattern 
+	char ','
+	many space
+	p2 <- pattern 
         char ')'
-        return $ Pair conts
+        return $ Pair (p1, p2)
 
 symbol = do
         nm <- name
@@ -336,6 +340,18 @@ andop = do
 orop = do
 	string "||"
 	return $ Op OR
+
+-- PAIR OPERATORS
+
+fstop :: Parser Expr
+fstop = do
+	char '$'
+	return $ Op FST
+	
+sndop :: Parser Expr
+sndop = do
+	char '#'
+	return $ Op SND
 
 {- INTERMEDIATE PARSING -}
 name :: Parser Name
