@@ -49,9 +49,10 @@ comp expr = case expr of
 		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Variable x -> do
 		(es,_) <- get
---		liftIO$print es
---		liftIO$putStr ("V "++x++" <- ")
+		liftIO$print es
+		liftIO$putStr ("V "++x++" <- ")
 		v <- deBruijn x es
+		liftIO$print v
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		(e,n) <- get
@@ -82,7 +83,13 @@ comp expr = case expr of
 		ce2 <- comp e2
 		put env
 		return $ ce1++ce2++[CONS]
+	LetAlias nm e1 e2 -> do
+		params [nm]
+		ce1 <- comp e1
+		ce2 <- comp e2
+		return $ ce1++[LET]++ce2++[ENDLET]
 	Lett nm e1 e2 -> do
+--		mapM index [nm]
 		params [nm]
 --		liftIO $ putStr ("Let: "++nm++" = ")
 --		liftIO $ print e1
@@ -107,6 +114,7 @@ comp expr = case expr of
 		ce <- comp e
 		return [BL (ce ++ [RTN]),CLOS]
 	RDef ps e -> do
+		modify (\(e,_) -> (e,2))
 		env <- get
 		params ps
 		ce <- comp e
@@ -119,7 +127,7 @@ comp expr = case expr of
 		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]
 	TRM e -> do --terminate
 		ce <- comp e
-		return $ ce
+		return $ ce++[RTN]
 	CNT e -> do --continue
 		ce <- comp e
 		return $ ce++[RAP]

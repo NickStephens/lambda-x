@@ -10,46 +10,6 @@ import Text.ParserCombinators.Parsec hiding (State)
 
 
 
-funct p = case p of
-	NoRec nm prms e -> do
-		te <- trans e
-		--translates alias w/ params into lambdas:
-		return $ foldr (\a b -> Lambda [a] b) te prms
-	Recr nm prms e -> do
-			(env:es,_) <- get
-			put $ (Map.insert nm 1 env:es, 1)
-			case e of
-				COND p e1 e2 -> do
-					pred <- trans p
-					trm <- trans e1
-					cnt <- trans e2 --recont e2
-					let rec = RCL pred (TRM trm) cnt
-					modify (\_ -> ([Map.empty],1))
-					return $ RDef prms rec
-	TRec nm prms e -> do
-		(env:es,_) <- get
-		put $ (Map.insert nm 1 env:es, 2)
-		case e of
-			COND p e1 e2 -> do
-				pred <- trans p
-				trm <- trans e1
-				cnt <- trans e2 --recont e2
-				let rec = RCL pred (TRM trm) cnt
-				modify (\_ -> ([Map.empty],1))
-				return $ RDef prms rec
-funcStream [p] = funct p
-funcStream (p:ps) = do
-	let nm = nameOf p
-	cont <- funcStream ps
-	fnc <- funct p
-	return $ Lett nm fnc cont
-		where nameOf p = case p of
-			NoRec n _ _ -> n
-			Recr  n _ _ -> n
-			TRec  n _ _ -> n		
-
-
-
 
 
 transl =  evalStateT trns ([Map.empty], 1)
@@ -96,6 +56,46 @@ main = fact 5;
 --Tletrec fact c a = if (n==1) then (a) else (fact ((c-1):(a*c):[]));
 
 
+funct p = case p of
+	NoRec nm prms e -> do
+		te <- trans e
+		--translates alias w/ params into lambdas:
+		return $ foldr (\a b -> Lambda [a] b) te prms
+	Recr nm prms e -> do
+			(env:es,_) <- get
+			put $ (Map.insert nm 1 env:es, 1)
+			case e of
+				COND p e1 e2 -> do
+					pred <- trans p
+					trm <- trans e1
+					cnt <- trans e2 --recont e2
+					let rec = RCL pred (TRM trm) cnt
+					modify (\_ -> ([Map.empty],1))
+					return $ RDef prms rec
+	TRec nm prms e -> do
+		(env:es,_) <- get
+		put $ (Map.insert nm 1 env:es, 2)
+		case e of
+			COND p e1 e2 -> do
+				pred <- trans p
+				trm <- trans e1
+				cnt <- trans e2 --recont e2
+				let rec = RCL pred (TRM trm) cnt
+				modify (\_ -> ([Map.empty],1))
+				return $ RDef prms rec
+funcStream [p] = funct p
+funcStream (p:ps) = do
+	let nm = nameOf p
+	cont <- funcStream ps
+	fnc <- funct p
+	return $ Lett nm fnc cont
+		where nameOf p = case p of
+			NoRec n _ _ -> n
+			Recr  n _ _ -> n
+			TRec  n _ _ -> n		
+
+
+
 trans :: Expr -> TRN EXP
 trans expr = case expr of
 {-	App a b -> do
@@ -130,7 +130,14 @@ trans expr = case expr of
 	App x y -> do
 		ty <- trans y
 		case x of
-			Op op -> return $ Lambda [""] (BinOp (opm op) ty (Variable ""))
+			Op op -> return $ (opm op ty)
+			Var v -> do
+				(env:es,n) <- get
+				if Map.member v env
+					then do
+						let cnt = if n==1 then CNT else TNT
+						return $ cnt ty
+					else return $ Apply (Variable v) ty
 			_     -> do
 				tx <- trans x
 				return $ Apply tx ty
@@ -150,7 +157,7 @@ trans expr = case expr of
 		return $ PR (tx:[ty])
 	Var n -> return $ Variable n
 	--nested Lams are treated as a function with multiple params
-{-	Lam x e -> do
+	Lam x e -> do
 		case e of
 			Lam y f -> do
 				Lambda nms ex <- trans e
@@ -158,17 +165,17 @@ trans expr = case expr of
 			_ -> do
 				te <- trans e
 				return $  Lambda [x] te
--}
-	Lam x e -> do
+
+{-	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
-
+-}
 	Let a ex -> do
 		tex <- trans ex
 		case a of
 			NoRec nm [] e -> do
 				te <- trans e
-				return $ Lett nm te tex
+				return $ Apply (Lambda [nm] tex) te --Lett nm te tex
 {-	NoRec nm prms e -> do
 		te <- trans e
 		return $ Def prms te
@@ -188,15 +195,16 @@ valuate v = case v of
 	ValChar c   -> Value$AC c
 
 
-opm op = case op of
-	SUB -> Sub
-	ADD -> Add
-	DIV -> Div
-	MUL -> Mul
-	CONSo -> Cons
-	LTo -> Lt
-	GTo -> Gt
-	EQo -> Equ
+opm op ty = case op of
+	SUB -> Lambda [""] $ BinOp Sub ty (Variable "")
+	ADD -> Lambda [""] $ BinOp Add ty (Variable "")
+	DIV -> Lambda [""] $ BinOp Div ty (Variable "")
+	MUL -> Lambda [""] $ BinOp Mul ty (Variable "")
+	CONSo -> Lambda [""] $ BinOp Cons ty (Variable "")
+	LTo -> Lambda [""] $ BinOp Lt ty (Variable "")
+	GTo -> Lambda [""] $ BinOp Gt ty (Variable "")
+	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")
+	CARo -> UnOp Car ty
 
 
 upm op = case op of
@@ -207,30 +215,6 @@ upm op = case op of
 
 translate expr = evalStateT (trans expr) ([Map.empty], 1)
 
-{-
-processParams :: [Alias] -> [Alias]
-processParams [] = []
-processParams ((NoRec nm prms e):as) = NoRec nm [] (placeParams prms e) : processParams as
-processParams ((Recr nm prms e):as) = Recr nm [] (placeParams prms e) : processParams as
-processParams ((TRec nm prms e):as) = TRec nm [] (placeParams prms e) : processParams as
-
-placeParams [] e = e
-placeParams (x:xs) e = Lam x $ placeParams xs e
-
-
-placeParams [] e = e
-placeParams (x:xs) e = case x of
-			ValPattern v -> placeParams xs e		
-			Symbol s -> Lam s $ placeParams xs e
-			List (h, t) -> Lam h $ placeParams xs e
-				--doesn't quiet suffice, we need a way of splitting
-				--up the list into these parts when it's passed as
-				--as an argument
-				-- one solution is to refer to h and t in the
-				-- body as (^<passedlist>) and (~<passedlist>)
-			Pair (f, s) -> Lam s $ placeParams xs e
-				-- same as above
--}
 
 
 
