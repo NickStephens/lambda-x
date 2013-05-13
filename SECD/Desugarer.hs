@@ -2,29 +2,69 @@ module Desugarer where
 
 import Parser 
 import AbstractSyntax
-import Text.ParserCombinators.Parsec (parse)
+import Text.ParserCombinators.Parsec (parse, many)
+import Control.Monad.State
 
-debug expr = case (parse expression "" expr) of
+debugcs expr = case (parse expression "" expr) of
 	Right res -> caseofDesugar res
+
+debugal expr = case (parse alias "" expr) of
+	Right res -> aliasDesugar res
+
+paramTest pat = case (parse (many pattern) "" pat) of
+	Right res -> placeParams res (Fault)
+
+-- Allows us to write a more proper translator
+type DesugaredProgram = [DesugaredAlias]
+
+data DesugaredAlias = DNoRec Name Expr | DRecr Name Expr | DTRec Name Expr
+		deriving (Show)
+
+{- ALIAS DESUGARING -}
+
+aliasDesugar :: Alias -> DesugaredAlias
+aliasDesugar alias = case alias of
+	NoRec nm params expr ->
+		DNoRec nm (placeParams params expr)
+	Recr nm params expr ->
+		DRecr nm (placeParams params expr)
+	TRec nm params expr ->
+		DTRec nm (placeParams params expr)
+
+placeParams = placeParams' 0 
+
+placeParams' :: Int -> [Pattern] -> Expr -> Expr
+placeParams' cnt [] expr = expr
+placeParams' cnt (p:params) expr = case p of
+		Symbol sym -> Lam sym $ placeParams' (cnt + 1) params expr
+		ValPattern val -> Lam strcnt $ COND (App (App (Op NEQ) 
+			(Var $ "v" ++ strcnt)) val) Fault $ 
+				placeParams' (cnt + 1)  params expr
+		List (x,xs) -> Lam ("lst" ++ strcnt) $ toLets (Var ("lst" ++ strcnt)) p $ 
+				placeParams' (cnt + 1)  params expr 
+		Pair (x,y) -> Lam ("pr" ++ strcnt) $ toLets (Var ("pr" ++ strcnt)) p $  
+				placeParams' (cnt + 1)  params expr
+		where strcnt = show cnt
 
 {- CASEOF DESUGARING -}
 
 -- any pattern matching on structures needs to account
 -- for values existing within those structures
 caseofDesugar :: Expr -> Expr
-caseofDesugar (Case subject []) = Val (ValInt (-1)) --temp solution
+caseofDesugar (Case subject []) = Fault --temp solution
 caseofDesugar (Case subject (b:branches)) = case (fst b) of
 	ValPattern val -> (COND (App (App (Op EQo) subject) val)
 				  (snd b)
 				  (caseofDesugar (Case subject branches)))
 	List (x, xs) -> (COND 
 			( valMatch subject (fst b)
-				(App (App (Op NEQ) subject) (Lst []))
+			(App (App (Op NEQ) subject) (Lst []))
 			)
 		        (toLets subject (fst b) (snd b))
 		        (caseofDesugar (Case subject branches)))
 	Pair (x, y) -> 	(COND
-		      	( valMatch subject (fst b) (Val (ValBool True)))
+		      	( valMatch subject (fst b) 
+			(Val (ValBool True)))
 			(toLets subject (fst b) (snd b)) -- letOf
 			(caseofDesugar (Case subject branches)))
 	Symbol sym ->   (toLets subject (fst b) (snd b))
