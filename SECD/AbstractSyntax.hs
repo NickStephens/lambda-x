@@ -10,7 +10,8 @@ data Alias    = NoRec Name Params Expr | Recr Name Params Expr | TRec Name Param
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Case Expr [(Pattern, Expr)] | Let Alias Expr | COND Expr Expr Expr |
-		Op Operator | Val Value | TERM | Lst [Expr] | Pr [Expr]
+		Op Operator | Val Value | Lst [Expr] | Pr [Expr] |
+		Fault
 			deriving (Show, Eq, Read)
 
 data Operator = ADD | SUB | MUL | DIV |
@@ -24,7 +25,7 @@ data Pattern  = List (Pattern, Pattern) | Pair (Pattern, Pattern) | Symbol Name 
 		deriving (Show, Eq, Read)
 
 data Value    = ValInt Integer | ValDouble Double |
-				ValBool Bool | ValChar Char
+		ValBool Bool | ValChar Char 
 					deriving (Show, Eq, Read)
 
 data Number   = NumInt Int | NumDouble Double
