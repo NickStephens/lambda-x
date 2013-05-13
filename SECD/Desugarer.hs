@@ -3,16 +3,17 @@ module Desugarer where
 import Parser 
 import AbstractSyntax
 import Text.ParserCombinators.Parsec (parse, many)
-import Control.Monad.State
+import qualified Data.Map as Map
 
-debugcs expr = case (parse expression "" expr) of
-	Right res -> caseofDesugar res
+desugarFile file = do
+	f <- parseFile file
+	case f of
+		Right res -> print $ desugar res
+		Left err -> print err 
 
-debugal expr = case (parse alias "" expr) of
-	Right res -> aliasDesugar res
-
-paramTest pat = case (parse (many pattern) "" pat) of
-	Right res -> placeParams res (Fault)
+desugar :: Program -> DesugaredProgram
+desugar [] = []
+desugar (a:alias) = aliasDesugar a: desugar alias
 
 -- Allows us to write a more proper translator
 type DesugaredProgram = [DesugaredAlias]
@@ -20,16 +21,25 @@ type DesugaredProgram = [DesugaredAlias]
 data DesugaredAlias = DNoRec Name Expr | DRecr Name Expr | DTRec Name Expr
 		deriving (Show)
 
+{- COLLECTION DESUGARING -}
+{-
+collect :: [DesugaredAlias] -> [DesugaredAlias]
+collect (a:alias) = 	firstPass (a:alias) Map.empty
+	-- do a pass over the functions looking for similar names
+	-- for each function with a similar name convert the multiple
+	-- 	definitions into a single definitition with case of
+-}
+
 {- ALIAS DESUGARING -}
 
 aliasDesugar :: Alias -> DesugaredAlias
 aliasDesugar alias = case alias of
 	NoRec nm params expr ->
-		DNoRec nm (placeParams params expr)
+		DNoRec nm (placeParams params (expressionDesugar expr))
 	Recr nm params expr ->
-		DRecr nm (placeParams params expr)
+		DRecr nm (placeParams params (expressionDesugar expr))
 	TRec nm params expr ->
-		DTRec nm (placeParams params expr)
+		DTRec nm (placeParams params (expressionDesugar expr))
 
 placeParams = placeParams' 0 
 
@@ -46,6 +56,20 @@ placeParams' cnt (p:params) expr = case p of
 				placeParams' (cnt + 1)  params expr
 		where strcnt = show cnt
 
+{- EXPRESSION DESUGARING -}
+
+expressionDesugar :: Expr -> Expr
+expressionDesugar (Lam x exp) = Lam x $ expressionDesugar exp
+expressionDesugar (App e1 e2) = App (expressionDesugar e1) (expressionDesugar e2)
+expressionDesugar (Case sub branches) = caseofDesugar (Case sub branches)
+expressionDesugar (Let a exp) = Let a $ expressionDesugar exp
+expressionDesugar (COND e1 e2 e3) = COND (expressionDesugar e1) (expressionDesugar e2)
+					(expressionDesugar e3)
+expressionDesugar (Lst exp) = Lst $ [ expressionDesugar e | e <- exp ]
+expressionDesugar (Pr (e1, e2)) = Pr (expressionDesugar e1, expressionDesugar e2)
+expressionDesugar ow = ow
+
+
 {- CASEOF DESUGARING -}
 
 -- any pattern matching on structures needs to account
@@ -54,20 +78,20 @@ caseofDesugar :: Expr -> Expr
 caseofDesugar (Case subject []) = Fault --temp solution
 caseofDesugar (Case subject (b:branches)) = case (fst b) of
 	ValPattern val -> (COND (App (App (Op EQo) subject) val)
-				  (snd b)
+				  (expressionDesugar (snd b))
 				  (caseofDesugar (Case subject branches)))
 	List (x, xs) -> (COND 
 			( valMatch subject (fst b)
 			(App (App (Op NEQ) subject) (Lst []))
 			)
-		        (toLets subject (fst b) (snd b))
+		        (toLets subject (fst b) (expressionDesugar (snd b)))
 		        (caseofDesugar (Case subject branches)))
 	Pair (x, y) -> 	(COND
 		      	( valMatch subject (fst b) 
 			(Val (ValBool True)))
-			(toLets subject (fst b) (snd b)) -- letOf
+			(toLets subject (fst b) (expressionDesugar (snd b)))
 			(caseofDesugar (Case subject branches)))
-	Symbol sym ->   (toLets subject (fst b) (snd b))
+	Symbol sym ->   (toLets subject (fst b) (expressionDesugar (snd b)))
 			
 
 

@@ -13,6 +13,8 @@ mane file = do
 		Left err -> print err
 		Right res -> print res
 
+parseFile file = parseFromFile program file
+
 {- PROGRAM -}
 
 program :: Parser Program
@@ -210,9 +212,12 @@ value = pair <|> list <|> integer <|> pchar <|> bool
 pair = do
 	char '('
 	many space
-	elst <- (many space >> expression) `sepBy` (char ',')
+	e1 <- expression
+	char ','
+	many space
+	e2 <- expression
 	char ')'
-	return $ Pr elst
+	return $ Pr (e1, e2)
 
 list = do
 	char '['

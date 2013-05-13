@@ -10,7 +10,7 @@ data Alias    = NoRec Name Params Expr | Recr Name Params Expr | TRec Name Param
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Case Expr [(Pattern, Expr)] | Let Alias Expr | COND Expr Expr Expr |
-		Op Operator | Val Value | Lst [Expr] | Pr [Expr] |
+		Op Operator | Val Value | Lst [Expr] | Pr (Expr, Expr) |
 		Fault
 			deriving (Show, Eq, Read)
 
