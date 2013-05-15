@@ -5,6 +5,11 @@ import AbstractSyntax
 import Text.ParserCombinators.Parsec (parse, many)
 import qualified Data.Map as Map
 
+{-
+debug stmt = case (parse alias "" stmt) of
+		Right res -> desugarFunc res
+-}
+
 desugarFile file = do
 	f <- parseFile file
 	case f of
@@ -31,15 +36,18 @@ collect (a:alias) = 	firstPass (a:alias) Map.empty
 -}
 
 {- ALIAS DESUGARING -}
+-- Assigns aliases patterns to their variables
+
 
 aliasDesugar :: Alias -> DesugaredAlias
 aliasDesugar alias = case alias of
 	NoRec nm params expr ->
-		DNoRec nm (placeParams params (expressionDesugar expr))
+		DNoRec nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
 	Recr nm params expr ->
-		DRecr nm (placeParams params (expressionDesugar expr))
+		DRecr nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
 	TRec nm params expr ->
-		DTRec nm (placeParams params (expressionDesugar expr))
+		DTRec nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
+
 
 placeParams = placeParams' 0 
 
@@ -55,6 +63,24 @@ placeParams' cnt (p:params) expr = case p of
 		Pair (x,y) -> Lam ("pr" ++ strcnt) $ toLets (Var ("pr" ++ strcnt)) p $  
 				placeParams' (cnt + 1)  params expr
 		where strcnt = show cnt
+
+{- DESUGAR FUNCTION CALLS -}
+-- Places all arguments to functions in a Lst for the SECR
+
+-- to actually list 
+desugarFuncCalls (COND test b1 b2) = (COND (desugarFuncCalls test) (desugarFuncCalls b1) (desugarFuncCalls b2))
+desugarFuncCalls (App (Var x) y) = App (Var x) (toLst (desugarFuncCalls y))
+desugarFuncCalls (App (App (Var x) (Lst y)) z) = (App (Var x) (append (Lst y) z))
+desugarFuncCalls (App (App (Op x) y) z) = (App (App (Op x) (desugarFuncCalls y)) (desugarFuncCalls z))
+desugarFuncCalls (App x y) = desugarFuncCalls $ (App (desugarFuncCalls x) (desugarFuncCalls y))
+desugarFuncCalls expr = expr
+
+toLst (Lst x) = Lst x
+toLst x = Lst [x]
+
+append (Lst x) (Lst z) = Lst $ x ++ z
+append (Lst x) z = Lst (x ++ [z])
+append x z = Lst (x:[z])
 
 {- EXPRESSION DESUGARING -}
 
