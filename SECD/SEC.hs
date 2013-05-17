@@ -27,7 +27,7 @@ data Code =
 			SEL |
 			BL Block | --load func
 			RC Block |
-			APP | TAP | RAP | SKP |
+			APP | TAP | RAP |
 			RTN |
 			LDC Code |
 			OP Oper |
@@ -76,9 +76,6 @@ delta = do
 		TLTRC -> do
 			let BL c' = head s
 			put (CL (c', BL c':[]):tail s, e, c)
---		LETREC -> do
---			let (BL bl) = head s
---			put (CL (bl,BL bl:e):tail s, e, c)
 		LETREC -> do
 			let (BL bl) = head s
 			let (BL bl') = head bl
@@ -99,9 +96,6 @@ delta = do
 		APP -> do
 	 		let (v:CL (c',e'):rest) = s
 			put (BL c:E e:rest, v:e', c')
---		APP -> do
---	 		let (L v:CL (c',e'):rest) = s
---			put (BL c:E e:rest, v++e', c')
 		RTN -> do
 			let (v:BL c':E e':rest) = s
 			put (v:rest, e', c')
@@ -126,20 +120,11 @@ delta = do
 			put (L []:s, e, c)
 		RC c' -> do
 			put (s, RC c':e, c'++c)
-		RAP -> do
-			let (L v:CL (c',e'):rest) = s
---			let arg = if null e' then [] else [head e']
-			put (BL c:E e:rest, v++((rplaca (CL (c',e'))):e'), c')
---			let (L as:rest) = s
---			let (RC c':e')  = e
---			put (BL c:E e:rest, RC c':as, c')
+
 		TAP -> do
---			let (L as:rest) = s
+			let (L as:rest) = s
 	 		let (L v:CL (c',e'):rest) = s
---			let (RC c':e')  = e
 			put (rest, v++e', c')
---			put (rest, RC c':as, c')
-		SKP -> put (s,e,c)
 
 
 
