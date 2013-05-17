@@ -7,39 +7,15 @@ import Data.List
 import Parser
 import Compiler
 import Text.ParserCombinators.Parsec hiding (State)
+import Desugarer
 
-
-
-processParams :: [Alias] -> [Alias]
-processParams [] = []
-processParams ((NoRec nm prms e):as) = NoRec nm [] (placeParams prms e) : processParams as
-processParams ((Recr nm prms e):as) = Recr nm [] (placeParams prms e) : processParams as
-processParams ((TRec nm prms e):as) = TRec nm [] (placeParams prms e) : processParams as
-		
-placeParams [] e = e
-placeParams (x:xs) e = Lam x $ placeParams xs e
-
-{-
-placeParams [] e = e
-placeParams (x:xs) e = case x of
-			ValPattern v -> placeParams xs e		
-			Symbol s -> Lam s $ placeParams xs e
-			List (h, t) -> Lam h $ placeParams xs e
-				--doesn't quiet suffice, we need a way of splitting
-				--up the list into these parts when it's passed as
-				--as an argument
-				-- one solution is to refer to h and t in the
-				-- body as (^<passedlist>) and (~<passedlist>)
-			Pair (f, s) -> Lam s $ placeParams xs e
-				-- same as above
--}
-			
 
 funct p = case p of
-	NoRec nm prms e -> do
+	DNoRec nm e -> do
 		te <- trans e
-		return $ te
-	Recr nm prms e -> do
+		--translates alias w/ params into lambdas:
+		return $ foldr (\a b -> Lambda [a] b) te 
+	DRecr nm e -> do
 			(env:es,_) <- get
 			put $ (Map.insert nm 1 env:es, 1)
 			case e of
@@ -49,8 +25,8 @@ funct p = case p of
 					cnt <- trans e2 --recont e2
 					let rec = RCL pred (TRM trm) cnt
 					modify (\_ -> ([Map.empty],1))
-					return $ RDef prms rec
-	TRec nm prms e -> do
+					return $ RDef [] rec
+	DTRec nm e -> do
 		(env:es,_) <- get
 		put $ (Map.insert nm 1 env:es, 2)
 		case e of
@@ -60,7 +36,8 @@ funct p = case p of
 				cnt <- trans e2 --recont e2
 				let rec = RCL pred (TRM trm) cnt
 				modify (\_ -> ([Map.empty],1))
-				return $ RDef prms rec
+				return $ RDef [] rec
+
 funcStream [p] = funct p
 funcStream (p:ps) = do
 	let nm = nameOf p
@@ -78,7 +55,7 @@ funcStream (p:ps) = do
 transl =  evalStateT trns ([Map.empty], 1)
 trns = do
 	prg <- mind "pecan.txt"
-	trs <- funcStream (processParams prg)
+	trs <- funcStream prg
 	return trs
 compl = evalStateT silt ([Map.empty], 1)
 silt = do
@@ -164,13 +141,13 @@ b' <- trans b
 	Lst l -> do
 		ls <- mapM trans l
 		return $ LSD ls
-	Pr (x:[y]) -> do
+	Pr (x, y) -> do
 		tx <- trans x
 		ty <- trans y
 		return $ PR (tx:[ty])
 	Var n -> return $ Variable n
 	--nested Lams are treated as a function with multiple params
-	Lam x e -> do
+{-	Lam x e -> do
 		case e of
 			Lam y f -> do
 				Lambda nms ex <- trans e
@@ -178,17 +155,18 @@ b' <- trans b
 			_ -> do
 				te <- trans e
 				return $  Lambda [x] te
-	Op o -> return $ OPR $ opm o 
-
-{-	Lam x e -> do
+-}
+	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
+
+	Op o -> return $ OPR $ opm o 
 	Let a ex -> do
 		tex <- trans ex
 		case a of
 			NoRec nm [] e -> do
 				te <- trans e
-				return $ Lett nm te tex-}
+				return $ Lett nm te tex
 {-	NoRec nm prms e -> do
 		te <- trans e
 		return $ Def prms te
