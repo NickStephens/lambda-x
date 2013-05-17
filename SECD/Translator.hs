@@ -1,6 +1,6 @@
 import PCONS
 import SEC
-import AbstractSyntax 
+import AbstractSyntax
 import qualified Data.Map as Map
 import Control.Monad.State
 import Data.List
@@ -8,6 +8,7 @@ import Parser
 import Compiler
 import Text.ParserCombinators.Parsec hiding (State)
 import Desugarer
+
 
 transl =  evalStateT trns ([Map.empty], 1)
 trns = do
@@ -29,11 +30,11 @@ prg = do
 	liftIO $ run e
 	return ()
 
-mind :: String -> TRN [Alias]
+mind :: String -> TRN [DesugaredAlias]
 mind file = do
 	f <- liftIO $ parseFromFile program file
 	case f of
-		Right res -> return res
+		Right res -> return $ desugar res
 
 pecan = evalStateT pcn ([Map.empty],1)
 pcn = do
@@ -43,10 +44,10 @@ pcn = do
 
 
 funct p = case p of
-	NoRec nm prms e -> do
+	DNoRec nm prms e -> do
 		te <- trans e
 		return $ foldr (\a b -> Lambda [a] b) te prms
-	Recr nm prms e -> do
+	DRecr nm prms e -> do
 			(env:es,_) <- get
 			put $ (Map.insert nm 1 env:es, 1)
 			te <- trans e
@@ -59,12 +60,13 @@ funcStream (p:ps) = do
 	fnc <- funct p
 	return $ Apply (Lambda [nm] cont) fnc
 		where nameOf p = case p of
-			NoRec n _ _ -> n
-			Recr  n _ _ -> n
-			TRec  n _ _ -> n		
+			DNoRec n _ _ -> n
+			DRecr  n _ _ -> n
+			DTRec  n _ _ -> n		
 
 trans :: Expr -> TRN EXP
 trans expr = case expr of
+
 	App x y -> do
 		ty <- trans y
 		case x of
@@ -81,10 +83,10 @@ trans expr = case expr of
 	Lst l -> do
 		ls <- mapM trans l
 		return $ LSD ls
-	Pr (x, y) -> do
+	Pr (x,y) -> do
 		tx <- trans x
 		ty <- trans y
-		return $ PR (tx:[ty])
+		return $ PR (tx,ty)
 	Var v -> do
 		(env:es,n) <- get
 		if Map.member v env
@@ -104,7 +106,6 @@ trans expr = case expr of
 		te <- trans e
 		return $ Lambda [x] te
 
-	Op o -> return $ OPR $ opm o 
 	Let a ex -> do
 		tex <- trans ex
 		case a of

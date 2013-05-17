@@ -218,7 +218,7 @@ pair = do
 	many space
 	e2 <- expression
 	char ')'
-	return $ Pr (e1, e2)
+	return $ Pr (e1,e2)
 
 list = do
 	char '['
