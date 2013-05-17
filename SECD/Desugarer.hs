@@ -95,13 +95,13 @@ caseofDesugar (Case subject (b:branches)) = case (fst b) of
 				  (caseofDesugar (Case subject branches)))
 	List (x, xs) -> (COND 
 			( valMatch subject (fst b)
-			(App (App (Op NEQ) subject) (Lst []))
+			(Val $ ValBool True)
 			)
 		        (toLets subject (fst b) (expressionDesugar (snd b)))
 		        (caseofDesugar (Case subject branches)))
 	Pair (x, y) -> 	(COND
 		      	( valMatch subject (fst b) 
-			(Val (ValBool True)))
+			(Val $ ValBool True))
 			(toLets subject (fst b) (expressionDesugar (snd b)))
 			(caseofDesugar (Case subject branches)))
 	Symbol sym ->   (toLets subject (fst b) (expressionDesugar (snd b)))

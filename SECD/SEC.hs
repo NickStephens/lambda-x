@@ -33,12 +33,14 @@ data Code =
 			OP Oper |
 			NIL | CONS | CAR | CDR | NULL | FS | SN |
 			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
-			E Env | C Char 
+			E Env | C Char |
+			PATTERN_ERR
 				deriving (Eq)
 
 instance Show Code where
 	show (I i) = show i --"(I "++show i++")"
 	show (L v) = show v --"(L "++show v++")"
+	show (P (c1, c2)) = show (c1, c2)
 	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
 	show (B b) = show b
 	show (E env) = "E " ++show env
@@ -58,8 +60,11 @@ instance Show Code where
 	show CAR = "CAR"
 	show CDR = "CDR"
 	show TAP = "TAP"
+	show FS = "FST"
+	show SN = "SND"
 	show (RC b) = "RC " ++ show b
 	show LETREC = "LETREC"
+	show PATTERN_ERR = "PATTERN_ERR"
 
 
 delta :: Secd ()
@@ -129,6 +134,8 @@ delta = do
 		TAP -> do
 	 		let (v:CL (c',e'):rest) = s
 			put (rest, v:e', c')
+		PATTERN_ERR -> do
+			throwError "(!) Pattern Match Failure"
 
 
 
@@ -148,6 +155,8 @@ oper op s
 			_    -> throwError "second arg not a boolean"
 		L l -> case head (tail s) of
 			L l' -> return (appL op l l')
+		P p@(p1, p2) -> case head (tail s) of
+			P p' -> return (appP op p p')
 
 appI op i i'
 	|op == Add = I $ i + i'
@@ -165,6 +174,9 @@ appB op b b'
 
 appL op l l'
 	|op == Equ = B $ l==l'
+
+appP op p p'
+	| op == Equ = B $ p==p'
 
 rela rel s
 	|length s < 2 = throwError "not enough values on stack to operate on"

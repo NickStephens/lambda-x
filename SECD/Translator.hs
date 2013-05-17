@@ -46,12 +46,12 @@ pcn = do
 funct p = case p of
 	DNoRec nm prms e -> do
 		te <- trans e
-		return $ foldr (\a b -> Lambda [a] b) te prms
+		return $ te 
 	DRecr nm prms e -> do
 			(env:es,_) <- get
 			put $ (Map.insert nm 1 env:es, 1)
 			te <- trans e
-			return $ LetR nm $ foldr (\a b -> Lambda [a] b) te prms
+			return $ LetR nm te
 
 funcStream [p] = funct p
 funcStream (p:ps) = do
@@ -105,6 +105,7 @@ trans expr = case expr of
 {-	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
+-}
 
 	Let a ex -> do
 		tex <- trans ex
@@ -112,7 +113,8 @@ trans expr = case expr of
 			NoRec nm [] e -> do
 				te <- trans e
 				return $ Apply (Lambda [nm] tex) te
--}
+	Fault -> do
+		return $ FAULT
 
 valuate v = case v of
 	ValInt i    -> Value$AI i

@@ -69,8 +69,8 @@ comp expr = case expr of
 		ls <- mapM lstVal l
 		return $ [LDC (L (concat ls))]
 	PR (x,y) -> do
-		[cx] <- comp x
-		[cy] <- comp y
+		[cx] <- lstVal x
+		[cy] <- lstVal y
 		return $ [LDC (P (cx,cy))]
 	Nil -> return [NIL]
 	Def ps e -> do
@@ -93,6 +93,8 @@ comp expr = case expr of
 	TNT e -> do --tail continue
 		ce <- comp e
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
+	FAULT -> do
+		return $ [PATTERN_ERR]
 
 deBruijn x (e:es) = do
 	case Map.lookup x e of
@@ -120,6 +122,10 @@ lstVal v = do
 		LSD (lsd) -> do
 			lsd' <- mapM lstVal lsd
 			return [L (concat lsd')]
+		PR (pr1, pr2) -> do
+			pr1' <- lstVal pr1
+			pr2' <- lstVal pr2
+			return [P (head $ pr1', head $ pr2')]
 
 opt o = case o of
 	Car -> CAR
