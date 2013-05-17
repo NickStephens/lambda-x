@@ -68,9 +68,10 @@ comp expr = case expr of
 	LSD l -> do
 		ls <- mapM lstVal l
 		return $ [LDC (L (concat ls))]
-	PR p -> do
-		pr <- mapM lstVal p
-		return $ [LDC (L (concat pr))]
+	PR (x,y) -> do
+		[cx] <- comp x
+		[cy] <- comp y
+		return $ [LDC (P (cx,cy))]
 	Nil -> return [NIL]
 	Def ps e -> do
 		params (reverse ps)
@@ -92,8 +93,6 @@ comp expr = case expr of
 	TNT e -> do --tail continue
 		ce <- comp e
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
-	OPR o -> do
-		return [opt o]
 
 deBruijn x (e:es) = do
 	case Map.lookup x e of
@@ -126,19 +125,6 @@ opt o = case o of
 	Car -> CAR
 	Cdr -> CDR
 	Cons -> CONS
+	Fst -> FS
+	Snd -> SN
 	_ -> OP o
-
-{-
-
-
-Letrec map f as = if (((~) as)==[]) then ((f ((^) as)):[]) else ((f ((^) as)):(map f ((~) as)));
-Letrec rev as rs = if (((~) as)==[]) then (((^) as):rs) else (rev ((~) as) (((^) as):rs));
-Letrec app as bs = if (((~) as)==[]) then (((^) as):bs) else (((^) as):(app ((~) as) bs));
-m = rev (map (\as.rev as []) [[1,2],[3,4],[5,6],[7,8]]) [];
-
-
--}
-
-
-
-

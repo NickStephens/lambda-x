@@ -31,8 +31,8 @@ data Code =
 			RTN |
 			LDC Code |
 			OP Oper |
-			NIL | CONS | CAR | CDR | NULL |
-			I Integer | D Double | L [Code] | CL Closure | B Bool |
+			NIL | CONS | CAR | CDR | NULL | FS | SN |
+			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
 			E Env | C Char 
 				deriving (Eq)
 
@@ -102,6 +102,12 @@ delta = do
 		OP op -> do
 			rslt <- oper op s
 			put (rslt:((tail . tail) s), e, c) --pop two operands off S
+		FS -> do
+			let (P (a,b):rest) = s
+			put (a:rest, e, c)
+		SN -> do
+			let (P (a,b):rest) = s
+			put (b:rest, e, c)
 		CONS -> do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
