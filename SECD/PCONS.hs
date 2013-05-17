@@ -23,7 +23,7 @@ data EXP =
 
 type Name = String
 
-data PATTERN = LISTP (Name, Name) | PAIRP (Name, Name) | SYMP Name
+data PATTERN = LISTP (PATTERN, PATTERN) | PAIRP (PATTERN, PATTERN) | SYMP Name | VALUEP EXP
 				deriving (Show, Eq, Ord)
 
 type Params = [Name]
