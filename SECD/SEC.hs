@@ -21,29 +21,46 @@ data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | An
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
-			CLOS | LTRC | TLTRC | STOS Block |
+			CLOS | LETREC | TLTRC | STOS Block |
 			LET |
 			ENDLET |
 			SEL |
 			BL Block | --load func
 			RC Block |
-			APP | TAP | RAP | SKP |
+			APP | TAP | RAP |
 			RTN |
 			LDC Code |
 			OP Oper |
 			NIL | CONS | CAR | CDR | NULL |
 			I Integer | D Double | L [Code] | CL Closure | B Bool |
 			E Env | C Char 
-				deriving (Eq, Show)
-{-
+				deriving (Eq)
+
 instance Show Code where
-	show (I i) = show i
-	show (L v) = show v
-	show (CL (f, e)) = "CL ("++show f++", "++show e
+	show (I i) = "(I "++show i++")"
+	show (L v) = "(L "++show v++")"
+	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
 	show (B b) = show b
-	show (E env) = show env
+	show (E env) = "E " ++show env
 	show (BL block) = "BL "++show block
--}
+	show CLOS = "CLOS"
+	show (ACC i) = "ACC " ++show i
+	show LET = "LET"
+	show ENDLET = "ENDLET"
+	show SEL = "SEL"
+	show APP = "APP"
+	show RAP = "RAP"
+	show RTN= "RTN"
+	show (LDC c) = "LDC " ++ show c
+	show (OP o) = "OP " ++ show o
+	show NIL = "NIL"
+	show CONS = "CONS"
+	show CAR = "CAR"
+	show CDR = "CDR"
+	show TAP = "TAP"
+	show (RC b) = "RC " ++ show b
+	show LETREC = "LETREC"
+
 
 delta :: Secd ()
 delta = do
@@ -59,9 +76,10 @@ delta = do
 		TLTRC -> do
 			let BL c' = head s
 			put (CL (c', BL c':[]):tail s, e, c)
-		LTRC -> do
-			let CL (c', _) = head s
-			put (CL (c',BL c':e):tail s, e, c)
+		LETREC -> do
+			let (BL bl) = head s
+			let (BL bl') = head bl
+			put (CL (bl',BL bl:e):tail s, e, c)
 		ENDLET -> do
 			popE
 		SEL -> do
@@ -76,8 +94,8 @@ delta = do
 			let BL c' = head s
 			put (CL (c',e):tail s, e, c)
 		APP -> do
-	 		let (L v:CL (c',e'):rest) = s
-			put (BL c:E e:rest, v++e', c')
+	 		let (v:CL (c',e'):rest) = s
+			put (BL c:E e:rest, v:e', c')
 		RTN -> do
 			let (v:BL c':E e':rest) = s
 			put (v:rest, e', c')
@@ -102,15 +120,16 @@ delta = do
 			put (L []:s, e, c)
 		RC c' -> do
 			put (s, RC c':e, c'++c)
-		RAP -> do
-			let (L as:rest) = s
-			let (RC c':e')  = e
-			put (BL c:E e:rest, RC c':as, c')
+
 		TAP -> do
 			let (L as:rest) = s
-			let (RC c':e')  = e
-			put (rest, RC c':as, c')
-		SKP -> put (s,e,c)
+	 		let (L v:CL (c',e'):rest) = s
+			put (rest, v++e', c')
+
+
+
+rplaca v = case v of
+	CL (f,e) -> CL (f,(rplaca v):e)
 
 
 oper :: Oper -> Scratch -> Secd Code
@@ -123,6 +142,8 @@ oper op s
 		B b  -> case head (tail s) of
 			B b' -> return (appB op b b')
 			_    -> throwError "second arg not a boolean"
+		L l -> case head (tail s) of
+			L l' -> return (appL op l l')
 
 appI op i i'
 	|op == Add = I $ i + i'
@@ -136,6 +157,9 @@ appI op i i'
 
 appB op b b'
 	|op == Or = B $ b || b'
+
+appL op l l'
+	|op == Equ = B $ l==l'
 
 rela rel s
 	|length s < 2 = throwError "not enough values on stack to operate on"
@@ -180,45 +204,6 @@ displayEnv e = do
 			displayEnv $tail e
 
 runtest tp = runErrorT (evalStateT run' tp)
-
-
-t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
-fact' = BL [ACC 1, LDC (I 1), OP Equ, SEL,
-	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, TAP]]
-
-
-t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, OP Add]
-cl = [ACC 1, LDC (I 1), OP Add, RTN]
-
-t2   = [fact, LTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
-fact = BL [ACC 1, LDC (I 1), OP Equ, SEL,
-	BL [ACC 2,RTN],
-	BL [ACC 3, LTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, APP],RTN]
-
-
-
-
-t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
-fibbd = BL [ACC 2, LDC (I 0), OP Equ, SEL,
-	BL [ACC 1, RTN],
-	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
-
-
-t5 = [revs, TLTRC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
-revs = BL [ACC 1, NULL, SEL,
-	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
-
-t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
-fibe = BL [ACC 2, LDC (I 0), OP Equ, SEL,
-	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
-	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
-
-
-
-fff = [BL [RC [ACC 2,LDC (I 0),OP Equ,ACC 2,LDC (I 1),OP Equ,OP Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),OP Sub,RAP,ACC 2,LDC (I 2),OP Sub,RAP,OP Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
-
 
 --Stack operations
 
