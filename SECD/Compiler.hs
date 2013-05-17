@@ -126,12 +126,16 @@ opt o = case o of
 	Cons -> CONS
 	_ -> OP o
 
+{-
 
 
+Letrec map f as = if (((~) as)==[]) then ((f ((^) as)):[]) else ((f ((^) as)):(map f ((~) as)));
+Letrec rev as rs = if (((~) as)==[]) then (((^) as):rs) else (rev ((~) as) (((^) as):rs));
+Letrec app as bs = if (((~) as)==[]) then (((^) as):bs) else (((^) as):(app ((~) as) bs));
+m = rev (map (\as.rev as []) [[1,2],[3,4],[5,6],[7,8]]) [];
 
 
-
-
+-}
 
 
 

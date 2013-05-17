@@ -130,11 +130,16 @@ opm op ty = case op of
 	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")
 	CARo -> UnOp Car ty
 	CDRo -> UnOp Cdr ty
+	AND -> Lambda [""] $ BinOp And ty (Variable "")
+	OR  -> Lambda [""] $ BinOp Or ty (Variable "")
+	NOT -> UnOp Not ty
+	FST -> UnOp Fst ty
+	SND -> UnOp Snd ty
 
-upm op = case op of
+--upm op = case op of
 --	NOT -> Not
-	CARo -> Car
-	CDRo -> Cdr
+--	CARo -> Car
+--	CDRo -> Cdr
 
 
 translate expr = evalStateT (trans expr) ([Map.empty], 1)

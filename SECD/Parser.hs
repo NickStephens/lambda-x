@@ -70,8 +70,8 @@ stratum    = primary `chainl1` (binary cons)
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
-term = plet <|> conditional <|> try (parexpression) <|>
-		try (paroperator) <|> variable <|> lambda <|> value
+term = try (paroperator) <|> plet <|> conditional <|> try (parexpression) <|>
+		variable <|> lambda <|> value
 
 {- PARENTHESIZED EXPRESSION -}
 parexpression = do

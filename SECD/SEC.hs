@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -37,8 +37,8 @@ data Code =
 				deriving (Eq)
 
 instance Show Code where
-	show (I i) = "(I "++show i++")"
-	show (L v) = "(L "++show v++")"
+	show (I i) = show i --"(I "++show i++")"
+	show (L v) = show v --"(L "++show v++")"
 	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
 	show (B b) = show b
 	show (E env) = "E " ++show env
@@ -155,6 +155,7 @@ appI op i i'
 
 appB op b b'
 	|op == Or = B $ b || b'
+	|op == And = B $ b && b'
 
 appL op l l'
 	|op == Equ = B $ l==l'
