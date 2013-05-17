@@ -105,8 +105,6 @@ trans expr = case expr of
 	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
-
-
 	Let a ex -> do
 		tex <- trans ex
 		case a of

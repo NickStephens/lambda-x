@@ -187,6 +187,11 @@ listpattern = do
         char ')'
         return $ List (head, tail)
 
+--emptylist = do
+--	char '['
+--	char ']'
+--	return EmptyL
+
 pairpattern = do
         char '('
 	many space
