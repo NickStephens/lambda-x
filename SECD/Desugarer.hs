@@ -99,12 +99,6 @@ caseofDesugar (Case subject (b:branches)) = case (fst b) of
 			)
 		        (toLets subject (fst b) (expressionDesugar (snd b)))
 		        (caseofDesugar (Case subject branches)))
-	EmptyL ->  (COND 
-			(
-			(App (App (Op EQo) subject) (Lst []))
-			)
-		        (expressionDesugar (snd b))
-		        (caseofDesugar (Case subject branches)))
 	Pair (x, y) -> 	(COND
 		      	( valMatch subject (fst b) 
 			(Val (ValBool True)))
