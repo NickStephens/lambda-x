@@ -29,11 +29,11 @@ prg = do
 	liftIO $ run e
 	return ()
 
-mind :: String -> TRN [Alias]
+mind :: String -> TRN [DesugaredAlias]
 mind file = do
 	f <- liftIO $ parseFromFile program file
 	case f of
-		Right res -> return res
+		Right res -> return (desugar res)
 
 pecan = evalStateT pcn ([Map.empty],1)
 pcn = do
@@ -43,10 +43,10 @@ pcn = do
 
 
 funct p = case p of
-	NoRec nm prms e -> do
+	DNoRec nm prms e -> do
 		te <- trans e
 		return $ foldr (\a b -> Lambda [a] b) te prms
-	Recr nm prms e -> do
+	DRecr nm prms e -> do
 			(env:es,_) <- get
 			put $ (Map.insert nm 1 env:es, 1)
 			te <- trans e
@@ -59,9 +59,9 @@ funcStream (p:ps) = do
 	fnc <- funct p
 	return $ Apply (Lambda [nm] cont) fnc
 		where nameOf p = case p of
-			NoRec n _ _ -> n
-			Recr  n _ _ -> n
-			TRec  n _ _ -> n		
+			DNoRec n _ _ -> n
+			DRecr  n _ _ -> n
+			DTRec  n _ _ -> n
 
 trans :: Expr -> TRN EXP
 trans expr = case expr of

@@ -9,7 +9,6 @@ desugarFile file = do
 	f <- parseFile file
 	case f of
 		Right res -> print $ desugar res
-		Left err -> print err 
 
 desugar :: Program -> DesugaredProgram
 desugar [] = []
