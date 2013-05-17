@@ -205,45 +205,6 @@ displayEnv e = do
 
 runtest tp = runErrorT (evalStateT run' tp)
 
-
-t3   = [fact', TLTRC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, TAP]
-fact' = BL [ACC 1, LDC (I 1), OP Equ, SEL,
-	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, TAP]]
-
-
-t1 = [BL cl, CLOS, NIL, LDC (I 2),CONS, APP, BL cl, CLOS, NIL, LDC (I 2), CONS, APP, OP Add]
-cl = [ACC 1, LDC (I 1), OP Add, RTN]
-
-t2   = [fact, LETREC, NIL, LDC (I 1), CONS, LDC (I 5), CONS, APP]
-fact = BL [ACC 1, LDC (I 1), OP Equ, SEL,
-	BL [ACC 2,RTN],
-	BL [ACC 3, LETREC, NIL, ACC 1, ACC 2, OP Mul, CONS, LDC (I 1), ACC 1, OP Sub, CONS, APP],RTN]
-
-
-
-
-t4 = [revs, TLTRC, NIL, NIL, CONS, fibbd, TLTRC, NIL, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP, CONS, TAP]
-fibbd = BL [ACC 2, LDC (I 0), OP Equ, SEL,
-	BL [ACC 1, RTN],
-	BL [ACC 3, TLTRC, NIL, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
-
-
-t5 = [revs, TLTRC, NIL, NIL, CONS, NIL, LDC (I 1), CONS, LDC (I 2), CONS, CONS, TAP]
-revs = BL [ACC 1, NULL, SEL,
-	BL [ACC 2],
-	BL [ACC 3, TLTRC, NIL, ACC 2, ACC 1, CAR, CONS, CONS, ACC 1, CDR, CONS, TAP]]
-
-t6 = [ fibe, TLTRC, NIL, revs, TLTRC, CONS, LDC (I 2), CONS, NIL, LDC (I 1), CONS, LDC (I 1), CONS, CONS, APP]
-fibe = BL [ACC 2, LDC (I 0), OP Equ, SEL,
-	BL [ACC 3, NIL, NIL, CONS, ACC 1, CONS, TAP],
-	BL [ACC 4, TLTRC, NIL, ACC 3, CONS, LDC (I 1), ACC 2, OP Sub, CONS, ACC 1, ACC 1, CAR, ACC 1, CDR, CAR, OP Add, CONS, CONS, TAP]]
-
-
-
-fff = [BL [RC [ACC 2,LDC (I 0),OP Equ,ACC 2,LDC (I 1),OP Equ,OP Or,SEL,BL [LDC (I 1),RTN],BL [ACC 2,LDC (I 1),OP Sub,RAP,ACC 2,LDC (I 2),OP Sub,RAP,OP Add,RTN]]],CLOS,NIL,LDC (I 4),CONS,APP]
-
-
 --Stack operations
 
 pushS :: Code -> Secd ()
