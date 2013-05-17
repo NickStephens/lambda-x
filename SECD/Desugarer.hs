@@ -5,11 +5,6 @@ import AbstractSyntax
 import Text.ParserCombinators.Parsec (parse, many)
 import qualified Data.Map as Map
 
-{-
-debug stmt = case (parse alias "" stmt) of
-		Right res -> desugarFunc res
--}
-
 desugarFile file = do
 	f <- parseFile file
 	case f of
@@ -23,7 +18,7 @@ desugar (a:alias) = aliasDesugar a: desugar alias
 -- Allows us to write a more proper translator
 type DesugaredProgram = [DesugaredAlias]
 
-data DesugaredAlias = DNoRec Name Expr | DRecr Name Expr | DTRec Name Expr
+data DesugaredAlias = DNoRec Name [Name] Expr | DRecr Name [Name] Expr | DTRec Name [Name] Expr
 		deriving (Show)
 
 {- COLLECTION DESUGARING -}
@@ -42,12 +37,23 @@ collect (a:alias) = 	firstPass (a:alias) Map.empty
 aliasDesugar :: Alias -> DesugaredAlias
 aliasDesugar alias = case alias of
 	NoRec nm params expr ->
-		DNoRec nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
+		DNoRec nm (nameParams params) (placeParams params (expressionDesugar expr))
 	Recr nm params expr ->
-		DRecr nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
+		DRecr nm (nameParams params) (placeParams params (expressionDesugar expr))
 	TRec nm params expr ->
-		DTRec nm (placeParams params (expressionDesugar $ desugarFuncCalls expr))
+		DTRec nm (nameParams params) (placeParams params (expressionDesugar expr))
 
+nameParams = nameParams' 0
+
+nameParams' :: Int -> [Pattern] -> [Name]
+nameParams' cnt [] = []
+nameParams' cnt (p:params) = case p of
+		Symbol sym -> sym:nameParams' (cnt+1) params
+		ValPattern val -> ("v" ++ strcnt):nameParams' (cnt+1) params
+		List (_,_) -> ("lst" ++ strcnt):nameParams' (cnt+1) params
+		Pair (_,_) -> ("pr" ++ strcnt):nameParams' (cnt+1) params
+		where strcnt = show cnt
+		
 
 placeParams = placeParams' 0 
 
@@ -63,24 +69,6 @@ placeParams' cnt (p:params) expr = case p of
 		Pair (x,y) -> Lam ("pr" ++ strcnt) $ toLets (Var ("pr" ++ strcnt)) p $  
 				placeParams' (cnt + 1)  params expr
 		where strcnt = show cnt
-
-{- DESUGAR FUNCTION CALLS -}
--- Places all arguments to functions in a Lst for the SECR
-
--- to actually list 
-desugarFuncCalls (COND test b1 b2) = (COND (desugarFuncCalls test) (desugarFuncCalls b1) (desugarFuncCalls b2))
-desugarFuncCalls (App (Var x) y) = App (Var x) (toLst (desugarFuncCalls y))
-desugarFuncCalls (App (App (Var x) (Lst y)) z) = (App (Var x) (append (Lst y) z))
-desugarFuncCalls (App (App (Op x) y) z) = (App (App (Op x) (desugarFuncCalls y)) (desugarFuncCalls z))
-desugarFuncCalls (App x y) = desugarFuncCalls $ (App (desugarFuncCalls x) (desugarFuncCalls y))
-desugarFuncCalls expr = expr
-
-toLst (Lst x) = Lst x
-toLst x = Lst [x]
-
-append (Lst x) (Lst z) = Lst $ x ++ z
-append (Lst x) z = Lst (x ++ [z])
-append x z = Lst (x:[z])
 
 {- EXPRESSION DESUGARING -}
 
