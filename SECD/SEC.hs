@@ -39,6 +39,7 @@ data Code =
 instance Show Code where
 	show (I i) = show i --"(I "++show i++")"
 	show (L v) = show v --"(L "++show v++")"
+	show (P (c1, c2)) = show (show c1, show c2)
 	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
 	show (B b) = show b
 	show (E env) = "E " ++show env
