@@ -93,6 +93,8 @@ comp expr = case expr of
 	TNT e -> do --tail continue
 		ce <- comp e
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
+	FAULT -> do
+		return $ [PATTERN_ERR]
 
 deBruijn x (e:es) = do
 	case Map.lookup x e of

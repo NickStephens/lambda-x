@@ -113,6 +113,8 @@ trans expr = case expr of
 			NoRec nm [] e -> do
 				te <- trans e
 				return $ Apply (Lambda [nm] tex) te
+	Fault -> do
+		return $ FAULT
 
 valuate v = case v of
 	ValInt i    -> Value$AI i

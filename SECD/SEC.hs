@@ -33,7 +33,8 @@ data Code =
 			OP Oper |
 			NIL | CONS | CAR | CDR | NULL | FS | SN |
 			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
-			E Env | C Char 
+			E Env | C Char |
+			PATTERN_ERR
 				deriving (Eq)
 
 instance Show Code where
@@ -63,6 +64,7 @@ instance Show Code where
 	show SN = "SND"
 	show (RC b) = "RC " ++ show b
 	show LETREC = "LETREC"
+	show PATTERN_ERR = "PATTERN_ERR"
 
 
 delta :: Secd ()
@@ -132,6 +134,8 @@ delta = do
 		TAP -> do
 	 		let (v:CL (c',e'):rest) = s
 			put (rest, v:e', c')
+		PATTERN_ERR -> do
+			throwError "(!) Pattern Match Failure"
 
 
 

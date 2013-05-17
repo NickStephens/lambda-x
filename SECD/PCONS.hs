@@ -17,7 +17,9 @@ data EXP =
 
 		Def Params EXP | RDef Params EXP | Clo EXP |
 
-		TRM EXP | CNT EXP | TNT EXP
+		TRM EXP | CNT EXP | TNT EXP |
+		
+		FAULT -- runtime pattern matching failure
 
 				deriving (Show, Eq, Ord)
 
