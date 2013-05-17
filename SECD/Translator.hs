@@ -94,18 +94,18 @@ trans expr = case expr of
 				let cnt = if n==1 then CNT (Variable v) else TNT (Variable v)
 				return $ cnt
 			else return $ Variable v
-	Lam x e -> do
+{-	Lam x e -> do
 		case e of
 			Lam y f -> do
 				Lambda nms ex <- trans e
 				return $ Lambda (x:nms) (Lambda [] ex)
 			_ -> do
 				te <- trans e
-				return $  Lambda [x] te
-{-	Lam x e -> do
+				return $  Lambda [x] te-}
+	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
--}
+
 
 	Let a ex -> do
 		tex <- trans ex
@@ -131,6 +131,7 @@ opm op ty = case op of
 	LTo -> Lambda [""] $ BinOp Lt ty (Variable "")
 	GTo -> Lambda [""] $ BinOp Gt ty (Variable "")
 	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")
+	NEQ -> Lambda [""] $ BinOp Neq ty (Variable "")
 	CARo -> UnOp Car ty
 	CDRo -> UnOp Cdr ty
 	AND -> Lambda [""] $ BinOp And ty (Variable "")
