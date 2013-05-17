@@ -63,7 +63,7 @@ stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = app     `chainl1` (binary mulop)
 app 	   = term `chainl1` application 
-<<<<<<< HEAD
+
 term = try (plet) <|> try (conditional) <|> try (caseof) 
 		<|> try (parexpression) <|> try (paroperator) <|> try (value) 
 		<|> variable <|> lambda 
