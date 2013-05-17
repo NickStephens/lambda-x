@@ -120,11 +120,9 @@ delta = do
 			put (L []:s, e, c)
 		RC c' -> do
 			put (s, RC c':e, c'++c)
-
 		TAP -> do
-			let (L as:rest) = s
-	 		let (L v:CL (c',e'):rest) = s
-			put (rest, v++e', c')
+	 		let (v:CL (c',e'):rest) = s
+			put (rest, v:e', c')
 
 
 
@@ -181,12 +179,12 @@ run p = runtest ([], [], p)
 run' :: Secd ()
 run' = do
 	(s,e,c)  <- get
-	liftIO $ putStrLn ("S: " ++ (show s))
-	liftIO $ putStrLn ("E: " ++ (show e))
-	liftIO $ putStrLn ("C: " ++ (show c))
+--	liftIO $ putStrLn ("S: " ++ (show s))
+--	liftIO $ putStrLn ("E: " ++ (show e))
+--	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
-	liftIO $ putStrLn ""
-	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
+--	liftIO $ putStrLn ""
+--	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
