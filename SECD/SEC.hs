@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -37,8 +37,8 @@ data Code =
 				deriving (Eq)
 
 instance Show Code where
-	show (I i) = "(I "++show i++")"
-	show (L v) = "(L "++show v++")"
+	show (I i) = show i --"(I "++show i++")"
+	show (L v) = show v --"(L "++show v++")"
 	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
 	show (B b) = show b
 	show (E env) = "E " ++show env
@@ -120,11 +120,9 @@ delta = do
 			put (L []:s, e, c)
 		RC c' -> do
 			put (s, RC c':e, c'++c)
-
 		TAP -> do
-			let (L as:rest) = s
-	 		let (L v:CL (c',e'):rest) = s
-			put (rest, v++e', c')
+	 		let (v:CL (c',e'):rest) = s
+			put (rest, v:e', c')
 
 
 
@@ -157,6 +155,7 @@ appI op i i'
 
 appB op b b'
 	|op == Or = B $ b || b'
+	|op == And = B $ b && b'
 
 appL op l l'
 	|op == Equ = B $ l==l'
@@ -181,12 +180,12 @@ run p = runtest ([], [], p)
 run' :: Secd ()
 run' = do
 	(s,e,c)  <- get
-	liftIO $ putStrLn ("S: " ++ (show s))
-	liftIO $ putStrLn ("E: " ++ (show e))
-	liftIO $ putStrLn ("C: " ++ (show c))
+--	liftIO $ putStrLn ("S: " ++ (show s))
+--	liftIO $ putStrLn ("E: " ++ (show e))
+--	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
-	liftIO $ putStrLn ""
-	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
+--	liftIO $ putStrLn ""
+--	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
