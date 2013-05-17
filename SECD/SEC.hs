@@ -58,6 +58,8 @@ instance Show Code where
 	show CAR = "CAR"
 	show CDR = "CDR"
 	show TAP = "TAP"
+	show FS = "FST"
+	show SN = "SND"
 	show (RC b) = "RC " ++ show b
 	show LETREC = "LETREC"
 
@@ -190,8 +192,8 @@ run' = do
 --	liftIO $ putStrLn ("E: " ++ (show e))
 --	liftIO $ putStrLn ("C: " ++ (show c))
 	delta
---	liftIO $ putStrLn ""
---	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
+	liftIO $ putStrLn ""
+	liftIO $ putStrLn ("Code: " ++ (show$head c)++" ->")
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do

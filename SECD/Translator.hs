@@ -105,6 +105,7 @@ trans expr = case expr of
 {-	Lam x e -> do
 		te <- trans e
 		return $ Lambda [x] te
+-}
 
 	Let a ex -> do
 		tex <- trans ex
@@ -112,7 +113,6 @@ trans expr = case expr of
 			NoRec nm [] e -> do
 				te <- trans e
 				return $ Apply (Lambda [nm] tex) te
--}
 
 valuate v = case v of
 	ValInt i    -> Value$AI i
