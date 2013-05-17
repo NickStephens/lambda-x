@@ -68,9 +68,10 @@ comp expr = case expr of
 	LSD l -> do
 		ls <- mapM lstVal l
 		return $ [LDC (L (concat ls))]
-	PR p -> do
-		pr <- mapM lstVal p
-		return $ [LDC (L (concat pr))]
+	PR (x,y) -> do
+		[cx] <- comp x
+		[cy] <- comp y
+		return $ [LDC (P (cx,cy))]
 	Nil -> return [NIL]
 	Def ps e -> do
 		params (reverse ps)
@@ -124,6 +125,8 @@ opt o = case o of
 	Car -> CAR
 	Cdr -> CDR
 	Cons -> CONS
+	Fst -> FS
+	Snd -> SN
 	_ -> OP o
 
 {-

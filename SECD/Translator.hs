@@ -82,10 +82,10 @@ trans expr = case expr of
 	Lst l -> do
 		ls <- mapM trans l
 		return $ LSD ls
-	Pr (x:[y]) -> do
+	Pr (x,y) -> do
 		tx <- trans x
 		ty <- trans y
-		return $ PR (tx:[ty])
+		return $ PR (tx,ty)
 	Var v -> do
 		(env:es,n) <- get
 		if Map.member v env

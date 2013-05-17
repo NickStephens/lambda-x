@@ -8,12 +8,12 @@ data Alias    = NoRec Name [Name] Expr | Recr Name [Name] Expr | TRec Name [Name
 
 data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 		Case Expr [(Pattern, Expr)] | Let Alias Expr | COND Expr Expr Expr |
-		Op Operator | Val Value | TERM | Lst [Expr] | Pr [Expr]
+		Op Operator | Val Value | TERM | Lst [Expr] | Pr (Expr,Expr)
 			deriving (Show, Eq, Read)
 
 data Operator = ADD | SUB | MUL | DIV |
 		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |	
-		CDRo | CARo | CONSo
+		CDRo | CARo | CONSo | AND | OR | FST | SND
 		deriving (Show, Eq, Read)
 
 data Pattern  = List (Name, Name) | Pair (Name, Name)

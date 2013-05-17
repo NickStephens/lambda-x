@@ -11,7 +11,7 @@ data EXP =
 
 		Cond EXP EXP EXP | LetR Name EXP |
 
-		UnOp Oper EXP | BinOp Oper EXP EXP | LSD [EXP] | PR [EXP] |
+		UnOp Oper EXP | BinOp Oper EXP EXP | LSD [EXP] | PR (EXP,EXP) |
 
 		CLst [EXP] | Nil | OPR Oper |
 
