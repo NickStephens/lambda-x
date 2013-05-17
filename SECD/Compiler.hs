@@ -15,6 +15,16 @@ type Scope = Map.Map String Int
 type CP = State (Scope, Int)
 
 --m = (\x.\y.(\x.\y.x-y) x y) 5 7;
+--Letrec f as = if (((^) ((~) as))==1) then (((^) as)) else (f ((((^) as)*((^) ((~) as))):((((^) ((~) as))-1):[])));
+--m = (f [1,2])+5;
+
+--Letrec f as = let a = (^) as; in (let c = (^) ((~) as); in (if (c==1) then (a) else (f ((a*c):((c-1):[])))));
+
+
+--Letrec app as = if (((~) ((^) as))==[]) then (((^) ((^) as)):((^) ((~) as))) else (((^) ((^) as)):(app (((~) ((^) as)):(((~) as)))));
+--Letrec rev as = if (((~) as)==[]) then (as) else (app ([1]:([2]:[])));
+--m = rev [1,2,3];
+
 
 comp :: EXP -> TRN [Code]
 comp expr = case expr of
@@ -22,7 +32,7 @@ comp expr = case expr of
 		env <- get
 		--x is a list of names that must be reversed to get the right ACC numberings
 		params (reverse x)
-		(en,_) <- get
+--		(en,_) <- get
 --		liftIO $ print en
 --		liftIO $ putStrLn "L: "
 --		liftIO $ print e
@@ -46,21 +56,20 @@ comp expr = case expr of
 		cv <- comp v --LD
 --		liftIO $ putStr "AVO: "
 --		liftIO $ print v
-		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
+		return $ cf ++ cv ++ [APP]
+--		return $ cf ++ ([NIL]++cv++[CONS]) ++ [APP]
 	Variable x -> do
 		(es,_) <- get
-		liftIO$print es
-		liftIO$putStr ("V "++x++" <- ")
+--		liftIO$print es
+--		liftIO$putStr ("V "++x++" <- ")
 		v <- deBruijn x es
-		liftIO$print v
+--		liftIO$print v
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
-		(e,n) <- get
 --		liftIO $ print e
 --		liftIO $ putStrLn "B"
 		ce1 <- comp e1
 		ce2 <- comp e2
-		put (e,n)
 		return $ ce2 ++ ce1 ++ [opt op]
 	UnOp op e -> do
 		te  <- comp e
@@ -71,11 +80,11 @@ comp expr = case expr of
 		AB b -> return [LDC (B b)]
 		AC c -> return [LDC (C c)]
 	Cond pred th el -> do
-		env <- get
 		p <- comp pred
 		th' <- comp th
 		el' <- comp el
-		put env
+--		liftIO$putStr "cont "
+--		liftIO$print el'
 		return $ p ++ [SEL] ++ [BL th'] ++ [BL el']
 	ConS e1 e2 -> do
 		env <- get
@@ -98,6 +107,16 @@ comp expr = case expr of
 --		liftIO $ print e2
 		e2' <- comp e2
 		return $ e1' ++ [LET] ++ e2' ++ [ENDLET]
+{-	LetR nms rec -> do
+		env <- get
+		params nms
+		crec <- comp rec
+		put env
+		return [BL (crec ++ [RTN]),LETREC]-}
+	LetR nm rec -> do
+		params [nm]
+		crec <- comp rec
+		return [BL (crec ++ [RTN]),LETREC]
 	CLst xs -> do
 		xs' <- mapM comp xs
 		let ls = concat $ intersperse [CONS] xs'
@@ -120,17 +139,19 @@ comp expr = case expr of
 		ce <- comp e
 		put env
 		return ce
-	RCL pred th el -> do --recursive call
+
+{-	RCL pred th el -> do --recursive call
 		p <- comp pred
 		trm <- comp th
 		cnt <- comp el
-		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]
+		return [BL [RC (p++[SEL]++[BL (trm++[RTN])]++[BL (cnt++[RTN])])],CLOS]-}
 	TRM e -> do --terminate
 		ce <- comp e
-		return $ ce++[RTN]
-	CNT e -> do --continue
-		ce <- comp e
-		return $ ce++[RAP]
+		return $ ce -- ++[RTN]
+	CNT v -> do --continue
+		cv <- comp v
+		return $ (cv ++ [LETREC]) --cv ++ [LTRC] ++ ce
+--		return $ ce++[RAP]
 	TNT e -> do --tail continue
 		ce <- comp e
 		return $ ce++[TAP] --leaves the superflous RTN in RCL
@@ -162,6 +183,17 @@ lstVal v = do
 		Value (AI i) -> return [I i]
 		Value (AB b) -> return [B b]
 		Value (AC c) -> return [C c]
+		LSD (lsd) -> do
+			lsd' <- mapM lstVal lsd
+			return [L (concat lsd')]
+--aVal v = do
+--	case v of
+--		AD d -> return [D d]
+--		AI i -> return [I i]
+--		AB b -> return [B b]
+--		AC c -> return [C c]
+
+
 
 opt o = case o of
 	Car -> CAR

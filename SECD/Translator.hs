@@ -64,15 +64,30 @@ funct p = case p of
 	Recr nm prms e -> do
 			(env:es,_) <- get
 			put $ (Map.insert nm 1 env:es, 1)
-			case e of
+{-			case e of
 				COND p e1 e2 -> do
 					pred <- trans p
 					trm <- trans e1
 					cnt <- trans e2 --recont e2
-					let rec = RCL pred (TRM trm) cnt
+					liftIO$print cnt
+					let rec = Cond pred (TRM trm) cnt
+					let arg = head prms
+					let prms' = tail prms
+					let recL = LetR (arg:[nm]) rec
 					modify (\_ -> ([Map.empty],1))
-					return $ RDef prms rec
-	TRec nm prms e -> do
+					return $ foldr (\a b -> Lambda [a] b) recL prms'-}
+--			te <- trans e
+--			let arg = head prms
+--			let prms' = tail prms
+--			let rec = LetR (arg:[nm]) te
+--			modify (\_-> ([Map.empty],1))
+--			return $ foldr (\a b -> Lambda [a] b) rec prms'
+			te <- trans e
+			return $ LetR nm $ foldr (\a b -> Lambda [a] b) te prms
+
+
+
+{-	TRec nm prms e -> do
 		(env:es,_) <- get
 		put $ (Map.insert nm 1 env:es, 2)
 		case e of
@@ -81,14 +96,15 @@ funct p = case p of
 				trm <- trans e1
 				cnt <- trans e2 --recont e2
 				let rec = RCL pred (TRM trm) cnt
+				let recL = foldr (\a b -> Lambda [a] b) rec prms
 				modify (\_ -> ([Map.empty],1))
-				return $ RDef prms rec
+				return $ LetR nm recL --RDef prms rec-}
 funcStream [p] = funct p
 funcStream (p:ps) = do
 	let nm = nameOf p
 	cont <- funcStream ps
 	fnc <- funct p
-	return $ Lett nm fnc cont
+	return $ Apply (Lambda [nm] cont) fnc --Lett nm fnc cont
 		where nameOf p = case p of
 			NoRec n _ _ -> n
 			Recr  n _ _ -> n
@@ -131,13 +147,13 @@ trans expr = case expr of
 		ty <- trans y
 		case x of
 			Op op -> return $ (opm op ty)
-			Var v -> do
+{-			Var v -> do
 				(env:es,n) <- get
 				if Map.member v env
 					then do
-						let cnt = if n==1 then CNT else TNT
+						let cnt = if n==1 then CNT (Variable v) else TNT (Variable v)
 						return $ cnt ty
-					else return $ Apply (Variable v) ty
+					else return $ Apply (Variable v) ty-}
 			_     -> do
 				tx <- trans x
 				return $ Apply tx ty
@@ -155,7 +171,13 @@ trans expr = case expr of
 		tx <- trans x
 		ty <- trans y
 		return $ PR (tx:[ty])
-	Var n -> return $ Variable n
+	Var v -> do
+		(env:es,n) <- get
+		if Map.member v env
+			then do
+				let cnt = if n==1 then CNT (Variable v) else TNT (Variable v)
+				return $ cnt
+			else return $ Variable v
 	--nested Lams are treated as a function with multiple params
 	Lam x e -> do
 		case e of
@@ -176,17 +198,7 @@ trans expr = case expr of
 			NoRec nm [] e -> do
 				te <- trans e
 				return $ Apply (Lambda [nm] tex) te --Lett nm te tex
-{-	NoRec nm prms e -> do
-		te <- trans e
-		return $ Def prms te
-	Recr nm prms e -> do
-		case e of
-			COND p e1 e2 -> do
-				pred <- trans p
-				trm <- trans e1
-				cnt <- trans e2
-				let rec = RCL pred (TRM trm) (CNT cnt)
-				return $ RDef nm prms rec-}
+
 
 valuate v = case v of
 	ValInt i    -> Value$AI i
@@ -205,6 +217,7 @@ opm op ty = case op of
 	GTo -> Lambda [""] $ BinOp Gt ty (Variable "")
 	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")
 	CARo -> UnOp Car ty
+	CDRo -> UnOp Cdr ty
 
 
 upm op = case op of
@@ -214,9 +227,6 @@ upm op = case op of
 
 
 translate expr = evalStateT (trans expr) ([Map.empty], 1)
-
-
-
 
 
 

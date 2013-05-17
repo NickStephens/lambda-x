@@ -7,7 +7,9 @@ data EXP =
 
 		Apply EXP EXP | Lambda [Name] EXP | Variable Name | Value AVal |
 
-		Lett Name EXP EXP | Case EXP [(EXP, EXP)] | Cond EXP EXP EXP |
+		Lett Name EXP EXP | Case EXP [(EXP, EXP)] | LetAlias Name EXP EXP | 
+
+		Cond EXP EXP EXP | LetR Name EXP |
 
 		UnOp Oper EXP | BinOp Oper EXP EXP | LSD [EXP] | PR [EXP] |
 
