@@ -7,6 +7,7 @@ import Data.List
 import Parser
 import Compiler
 import Text.ParserCombinators.Parsec hiding (State)
+import Desugarer
 
 
 transl =  evalStateT trns ([Map.empty], 1)
