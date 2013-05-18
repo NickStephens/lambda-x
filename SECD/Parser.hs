@@ -193,6 +193,27 @@ pcase = do
         many space
         return (pat, exp)
 
+{- SUGARED CONSTRUCTORS -}
+
+pairconst = do
+	char '('
+	many space
+	e1 <- expression
+	char ','
+	many space
+	e2 <- expression
+	char ')'
+	return (App (App (Op PAIRIT) e1) e2)
+
+{-
+listconst = do 
+	char '['
+	many space
+	e <- expression
+	char ',' <|> char ']'
+-}
+	
+
 {- PATTERNS -}
 
 pattern = try (listpattern) <|> try (pairpattern) <|> symbol <|> valuePattern
@@ -207,11 +228,6 @@ listpattern = do
         tail <- pattern
         char ')'
         return $ List (head, tail)
-
---emptylist = do
---	char '['
---	char ']'
---	return EmptyL
 
 pairpattern = do
         char '('
@@ -244,7 +260,7 @@ pair = do
 	many space
 	e2 <- expression
 	char ')'
-	return $ Pr (e1,e2)
+	return $ (App (App (Op PAIRIT) e1) e2)	
 
 list = do
 	char '['
