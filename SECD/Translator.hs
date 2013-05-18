@@ -126,6 +126,7 @@ opm op ty = case op of
 	DIV -> Lambda [""] $ BinOp Div ty (Variable "")
 	MUL -> Lambda [""] $ BinOp Mul ty (Variable "")
 	CONSo -> Lambda [""] $ BinOp Cons ty (Variable "")
+	PAIRIT -> Lambda [""] $ BinOp PairIt ty (Variable "")
 	LTo -> Lambda [""] $ BinOp Lt ty (Variable "")
 	GTo -> Lambda [""] $ BinOp Gt ty (Variable "")
 	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")

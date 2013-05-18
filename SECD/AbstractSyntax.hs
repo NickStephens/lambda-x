@@ -17,7 +17,7 @@ data Expr     = App Expr Expr | Lam Name Expr | Var Name |
 data Operator = ADD | SUB | MUL | DIV |
 		LTo | GTo | ELT | EGT | EQo | NEQ | NOT |
 		CDRo | CARo | CONSo |
-		FST | SND |
+		FST | SND | PAIRIT |
 		AND | OR
 		deriving (Show, Eq, Read)
 

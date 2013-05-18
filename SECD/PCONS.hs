@@ -2,7 +2,7 @@
 module PCONS where
 
 import AbstractSyntax (Pattern)
-import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ, And, Or, Cdr, Car, Cons, Fst, Snd, Neq))
+import SEC (Oper (Add, Sub, Mul, Div, Mod, Not, Neg, Lt, Gt, Equ, And, Or, Cdr, Car, Cons, Fst, Snd, Neq, PairIt))
 
 data EXP = 
 		Apply EXP EXP | Lambda [Name] EXP | Variable Name | Value AVal |

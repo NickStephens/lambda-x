@@ -33,10 +33,10 @@ comp expr = case expr of
 		return $ cf ++ cv ++ [APP]
 	Variable x -> do
 		(es,_) <- get
---		liftIO$print es
---		liftIO$ putStr (show x++" <- ")
+		liftIO$print es
+		liftIO$ putStr (show x++" <- ")
 		v <- deBruijn x es
---		liftIO$ print v
+		liftIO$ print v
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		ce1 <- comp e1
@@ -130,7 +130,9 @@ lstVal v = do
 			pr2' <- lstVal pr2
 			return [P (head $ pr1', head $ pr2')]
 
+
 opt o = case o of
+	PairIt -> PRC
 	Car -> CAR
 	Cdr -> CDR
 	Cons -> CONS

@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq | PairIt
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -31,7 +31,7 @@ data Code =
 			RTN |
 			LDC Code |
 			OP Oper |
-			NIL | CONS | CAR | CDR | NULL | FS | SN |
+			NIL | CONS | CAR | CDR | NULL | FS | SN | PRC |
 			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
 			E Env | C Char |
 			PATTERN_ERR
@@ -65,7 +65,7 @@ instance Show Code where
 	show (RC b) = "RC " ++ show b
 	show LETREC = "LETREC"
 	show PATTERN_ERR = "PATTERN_ERR"
-
+	show PRC = "PRC"
 
 delta :: Secd ()
 delta = do
@@ -113,6 +113,9 @@ delta = do
 		SN -> do
 			let (P (a,b):rest) = s
 			put (b:rest, e, c)
+		PRC -> do
+			let (a:b:rest) = s
+			put (P (a,b):rest,e,c)
 		CONS -> do
 			let (a:L as:rest) = s
 			put ((L (a:as)):rest, e, c)
@@ -199,6 +202,7 @@ run p = runtest ([], [], p)
 run' :: Secd ()
 run' = do
 	(s,e,c)  <- get
+--	if s==[] then liftIO $ putStrLn "[]" else liftIO $ putStrLn ("S: " ++ (show (head s)))
 --	liftIO $ putStrLn ("S: " ++ (show s))
 --	liftIO $ putStrLn ("E: " ++ (show e))
 --	liftIO $ putStrLn ("C: " ++ (show c))

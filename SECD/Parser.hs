@@ -58,7 +58,8 @@ acenter = do
 -- then functional application
 
 expression = logical `chainl1` (binary logop)
-logical    = stratum `chainl1` (binary relop) <|> unary (notop) stratum
+logical    = slocum `chainl1` (binary relop) <|> unary (notop) slocum
+slocum     = stratum `chainl1` (binary pairit)
 stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = funcomp `chainl1` (binary mulop)
@@ -100,6 +101,7 @@ composition = do
 	return $ Lam "" (App e2 (App e1 (Var "")))
 
 {- SUGAR -}
+compop :: Parser (Expr -> Expr -> Expr)
 compop = do
 	string ".."
 	return (\x y -> Lam "" (App x (App y (Var ""))))
@@ -116,6 +118,7 @@ unary f par = do
 	return (App op exp)
 
 {- APPLICATION -}
+application :: Parser (Expr -> Expr -> Expr)
 application = do
 	many1 space
 	return App
@@ -356,10 +359,17 @@ cdr = do
 	char '~'
 	return $ Op CDRo
 
-
+cons :: Parser Expr
 cons = do
 	char ':'
 	return $ Op CONSo
+
+-- PAIR OPERATOR
+
+pairit :: Parser Expr
+pairit = do
+	string "<>"
+	return $ Op PAIRIT
 
 -- LOGICAL OPERATORS
 
