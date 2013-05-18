@@ -61,10 +61,11 @@ expression = logical `chainl1` (binary logop)
 logical    = stratum `chainl1` (binary relop) <|> unary (notop) stratum
 stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
-factor	   = app     `chainl1` (binary mulop)
+factor	   = funcomp `chainl1` (binary mulop)
+funcomp    = app `chainr1` compop
 app 	   = term `chainl1` application 
 
-term = try (plet) <|> try (conditional) <|> try (caseof) 
+term = try composition <|> try (plet) <|> try (conditional) <|> try (caseof) 
 		<|> try (parexpression) <|> try (paroperator) <|> try (value) 
 		<|> variable <|> lambda 
 
@@ -85,7 +86,24 @@ paroperator = do
 		char ')'
 		return op
 
+{- COMPOSITION -}
+composition = do
+	char '('
+	many space
+	e2 <- expression
+	many space
+	string ".."
+	many space
+	e1 <- expression
+	many space
+	char ')'
+	return $ Lam "" (App e2 (App e1 (Var "")))
+
 {- SUGAR -}
+compop = do
+	string ".."
+	return (\x y -> Lam "" (App x (App y (Var ""))))
+
 binary f = do
 	many space
 	op <- f
@@ -275,6 +293,7 @@ listop = car <|> cdr <?> "list operator"
 addop = add <|> sub <?> "addition operator"
 
 mulop = mul <|> div <?> "multiplicative operator"
+
 
 -- ARITHMENTIC OPERATORS
 add = do

@@ -33,7 +33,10 @@ comp expr = case expr of
 		return $ cf ++ cv ++ [APP]
 	Variable x -> do
 		(es,_) <- get
+--		liftIO$print es
+--		liftIO$ putStr (show x++" <- ")
 		v <- deBruijn x es
+--		liftIO$ print v
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		ce1 <- comp e1
