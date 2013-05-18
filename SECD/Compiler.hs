@@ -33,10 +33,10 @@ comp expr = case expr of
 		return $ cf ++ cv ++ [APP]
 	Variable x -> do
 		(es,_) <- get
-		liftIO$print es
-		liftIO$ putStr (show x++" <- ")
+--		liftIO$print es
+--		liftIO$ putStr (show x++" <- ")
 		v <- deBruijn x es
-		liftIO$ print v
+--		liftIO$ print v
 		return $ [ACC v]
 	BinOp op e1 e2 -> do
 		ce1 <- comp e1
@@ -92,7 +92,7 @@ comp expr = case expr of
 		return $ ce -- ++[RTN]
 	CNT v -> do --continue
 		cv <- comp v
-		return $ (cv ++ [LETREC]) --cv ++ [LTRC] ++ ce
+		return $ cv --(cv ++ [LETREC])
 	TNT e -> do --tail continue
 		ce <- comp e
 		return $ ce++[TAP] --leaves the superflous RTN in RCL

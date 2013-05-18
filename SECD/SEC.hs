@@ -84,7 +84,12 @@ delta = do
 		LETREC -> do
 			let (BL bl) = head s
 			let (BL bl') = head bl
-			put (CL (bl',BL bl:e):tail s, e, c)
+			let v = CL (bl',e)
+			put (rplaca v:tail s, e, c)
+--		LETREC -> do
+--			let (BL bl) = head s
+--			let (BL bl') = head bl
+--			put (CL (bl',BL bl:e):tail s, e, c)
 		ENDLET -> do
 			popE
 		SEL -> do
