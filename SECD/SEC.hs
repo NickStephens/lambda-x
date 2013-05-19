@@ -41,7 +41,7 @@ instance Show Code where
 	show (I i) = show i --"(I "++show i++")"
 	show (L v) = show v --"(L "++show v++")"
 	show (P (c1, c2)) = show (c1, c2)
-	show (CL (f, e)) = "CL {{ "++show f++"  ||  "++show e++ " }}" -- ++show e
+	show (CL (f, e)) = "CL {{ "++show f++"  || 'E' }}" -- ++show e
 	show (B b) = show b
 	show (E env) = "E " ++show env
 	show (BL block) = "BL "++show block
