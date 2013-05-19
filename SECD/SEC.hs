@@ -31,7 +31,7 @@ data Code =
 			RTN |
 			LDC Code |
 			OP Oper |
-			NIL | CONS | CAR | CDR | NULL | FS | SN | PRC |
+			NIL | CONS | CAR | CDR | NULL | FS | SN | PRC | NOTOP |
 			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
 			E Env | C Char |
 			PATTERN_ERR
@@ -118,6 +118,9 @@ delta = do
 		SN -> do
 			let (P (a,b):rest) = s
 			put (b:rest, e, c)
+		NOTOP -> do
+			let (B b:rest) = s
+			put ((B $ not b):rest, e, c)
 		PRC -> do
 			let (a:b:rest) = s
 			put (P (a,b):rest,e,c)
