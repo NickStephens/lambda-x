@@ -59,7 +59,7 @@ acenter = do
 
 expression = logical `chainl1` (binary logop)
 logical    = slocum `chainl1` (binary relop) <|> unary (notop) slocum
-slocum     = stratum `chainl1` (binary pairit)
+slocum     = stratum `chainl1` (binary (try pairit))
 stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = funcomp `chainl1` (binary mulop)

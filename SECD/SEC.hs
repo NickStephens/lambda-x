@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq | PairIt
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq | PairIt | Egt | Elt
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -175,6 +175,9 @@ appI op i i'
 	|op == Lt = B $ i < i'
 	|op == Gt = B $i > i'
 	|op == Equ = B $ i == i'
+	|op == Egt = B $ i >= i'
+	|op == Elt = B $ i <= i'
+	|op == Neq = B $ i /= i'
 
 appB op b b'
 	|op == Or = B $ b || b'

@@ -131,6 +131,8 @@ opm op ty = case op of
 	GTo -> Lambda [""] $ BinOp Gt ty (Variable "")
 	EQo -> Lambda [""] $ BinOp Equ ty (Variable "")
 	NEQ -> Lambda [""] $ BinOp Neq ty (Variable "")
+	EGT -> Lambda [""] $ BinOp Egt ty (Variable "")
+	ELT -> Lambda [""] $ BinOp Elt ty (Variable "")
 	CARo -> UnOp Car ty
 	CDRo -> UnOp Cdr ty
 	AND -> Lambda [""] $ BinOp And ty (Variable "")
