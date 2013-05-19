@@ -138,4 +138,5 @@ opt o = case o of
 	Cons -> CONS
 	Fst -> FS
 	Snd -> SN
+	Not -> NOTOP
 	_ -> OP o

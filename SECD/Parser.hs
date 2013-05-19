@@ -59,7 +59,7 @@ acenter = do
 
 expression = logical `chainl1` (binary logop)
 logical    = slocum `chainl1` (binary relop) <|> unary (notop) slocum
-slocum     = stratum `chainl1` (binary pairit)
+slocum     = stratum `chainl1` (binary (try pairit))
 stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 primary    = factor  `chainl1` (binary addop)
 factor	   = funcomp `chainl1` (binary mulop)
@@ -193,6 +193,27 @@ pcase = do
         many space
         return (pat, exp)
 
+{- SUGARED CONSTRUCTORS -}
+
+pairconst = do
+	char '('
+	many space
+	e1 <- expression
+	char ','
+	many space
+	e2 <- expression
+	char ')'
+	return (App (App (Op PAIRIT) e1) e2)
+
+{-
+listconst = do 
+	char '['
+	many space
+	e <- expression
+	char ',' <|> char ']'
+-}
+	
+
 {- PATTERNS -}
 
 pattern = try (listpattern) <|> try (pairpattern) <|> symbol <|> valuePattern
@@ -207,11 +228,6 @@ listpattern = do
         tail <- pattern
         char ')'
         return $ List (head, tail)
-
---emptylist = do
---	char '['
---	char ']'
---	return EmptyL
 
 pairpattern = do
         char '('
@@ -244,7 +260,7 @@ pair = do
 	many space
 	e2 <- expression
 	char ')'
-	return $ Pr (e1,e2)
+	return $ (App (App (Op PAIRIT) e1) e2)	
 
 list = do
 	char '['

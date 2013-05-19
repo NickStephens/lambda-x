@@ -17,7 +17,7 @@ type Closure = (Func, Env)
 type Const   = Integer
 type Block   = [Code]
 type Func    = [Code]
-data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq | PairIt
+data Oper    = Add | Sub | Mul | Div | Mod | Not | Neg | Lt | Gt | Equ | Or | And | Cdr | Car | Cons | Fst | Snd | Neq | PairIt | Egt | Elt
 		deriving (Show, Eq, Ord)
 data Code =
 			ACC Int |
@@ -31,7 +31,7 @@ data Code =
 			RTN |
 			LDC Code |
 			OP Oper |
-			NIL | CONS | CAR | CDR | NULL | FS | SN | PRC |
+			NIL | CONS | CAR | CDR | NULL | FS | SN | PRC | NOTOP |
 			I Integer | D Double | L [Code] | CL Closure | B Bool | P (Code,Code) |
 			E Env | C Char |
 			PATTERN_ERR
@@ -118,6 +118,9 @@ delta = do
 		SN -> do
 			let (P (a,b):rest) = s
 			put (b:rest, e, c)
+		NOTOP -> do
+			let (B b:rest) = s
+			put ((B $ not b):rest, e, c)
 		PRC -> do
 			let (a:b:rest) = s
 			put (P (a,b):rest,e,c)
@@ -175,6 +178,9 @@ appI op i i'
 	|op == Lt = B $ i < i'
 	|op == Gt = B $i > i'
 	|op == Equ = B $ i == i'
+	|op == Egt = B $ i >= i'
+	|op == Elt = B $ i <= i'
+	|op == Neq = B $ i /= i'
 
 appB op b b'
 	|op == Or = B $ b || b'
