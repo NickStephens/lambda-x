@@ -1,3 +1,5 @@
+module Translator where
+
 import PCONS
 import SEC
 import AbstractSyntax

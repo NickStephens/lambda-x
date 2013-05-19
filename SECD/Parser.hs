@@ -58,11 +58,11 @@ acenter = do
 -- then functional application
 
 expression = logical `chainl1` (binary logop)
-logical    = slocum `chainl1` (binary relop) <|> unary (notop) slocum
-slocum     = stratum `chainl1` (binary (try pairit))
-stratum    = primary `chainl1` (binary cons) <|> unary (car <|> cdr) primary
+logical    = slocum  `chainl1` (binary relop) <|> unary (notop) slocum
+slocum     = primary  `chainl1` (binary (try pairit))
 primary    = factor  `chainl1` (binary addop)
-factor	   = funcomp `chainl1` (binary mulop)
+factor	   = stratum `chainl1` (binary mulop)
+stratum    = funcomp `chainl1` (binary cons) <|> unary (car <|> cdr) primary
 funcomp    = app `chainr1` compop
 app 	   = term `chainl1` application 
 
