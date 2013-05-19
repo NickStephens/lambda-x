@@ -15,6 +15,8 @@ mane file = do
 
 parseFile file = parseFromFile program file
 
+parseExpression = parse expression "" 
+
 {- PROGRAM -}
 
 program :: Parser Program
@@ -304,14 +306,14 @@ operator = relop <|> addop <|> mulop <|> listop <|> logop <?> "operator"
 
 logop = andop <|> orop <?> "logical operator"
 
-relop = try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> neq
+relop = try (elt) <|> try (egt) <|> lt <|> gt <|> eq <|> try (neq)
 	<?> "relational operator"
 
 listop = car <|> cdr <?> "list operator"
 
 addop = add <|> sub <?> "addition operator"
 
-mulop = mul <|> div <?> "multiplicative operator"
+mulop = mul <|> try (div) <?> "multiplicative operator"
 
 
 -- ARITHMENTIC OPERATORS
@@ -357,7 +359,7 @@ eq = do
 	return $ Op EQo
 
 neq = do
-	string "/="
+	string "!="
 	return $ Op NEQ
 
 notop :: Parser Expr
