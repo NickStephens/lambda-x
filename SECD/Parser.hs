@@ -63,12 +63,13 @@ expression = logical `chainl1` (binary logop)
 logical    = slocum  `chainl1` (binary relop) <|> unary (notop) slocum
 slocum     = primary  `chainl1` (binary (try pairit))
 primary    = factor  `chainl1` (binary addop)
-factor	   = stratum `chainl1` (binary mulop)
-stratum    = funcomp `chainl1` (binary cons) <|> unary (car <|> cdr) primary
+factor	   = stratum `chainl1` (binary (try mulop))
+stratum    = funcomp `chainl1` (binary cons)
 funcomp    = app `chainr1` compop
-app 	   = term `chainl1` application 
+app 	   = term `chainl1` application
 
-term = try composition <|> try (plet) <|> try (conditional) <|> try (caseof) 
+term = try (plet) <|> try (conditional) <|> try (caseof) 
+		<|> (unary (car <|> cdr) term) 
 		<|> try (parexpression) <|> try (paroperator) <|> try (value) 
 		<|> variable <|> lambda 
 
@@ -88,19 +89,6 @@ paroperator = do
 		many space
 		char ')'
 		return op
-
-{- COMPOSITION -}
-composition = do
-	char '('
-	many space
-	e2 <- expression
-	many space
-	string ".."
-	many space
-	e1 <- expression
-	many space
-	char ')'
-	return $ Lam "" (App e2 (App e1 (Var "")))
 
 {- SUGAR -}
 compop :: Parser (Expr -> Expr -> Expr)
@@ -359,7 +347,7 @@ eq = do
 	return $ Op EQo
 
 neq = do
-	string "!="
+	string "/="
 	return $ Op NEQ
 
 notop :: Parser Expr
