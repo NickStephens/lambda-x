@@ -1,5 +1,8 @@
 module Interpreter.Main where
 
+import Text.ParserCombinators.Parsec
+import Parser
+import AbstractSyntax
 import Interpreter.CmdParser
 import Interpreter.CmdAbstractSyntax
 import Desugarer (desugar, expressionDesugar)
@@ -33,15 +36,11 @@ runInterpreter = do
 		case (inp) of
 			Nothing -> return ()
 			Just cmd -> do
-				command <- commandParse cmd
-				runInterpreter
-
-{-
 					-- mods <- getModules
-					mods <- load "Prelude.txt"
+					mods <- load "pcons/prelude.pcons"
 					-- place expr in history
 					-- lookup names and substitute
-					processAndRun expr mods
+					processAndRun cmd mods
 					runInterpreter
 
 
@@ -68,4 +67,3 @@ load filename = do
 		contents <- parseFile filename
 		case contents of
 			Right res -> return res
--}
