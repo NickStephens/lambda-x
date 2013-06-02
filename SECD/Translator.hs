@@ -26,7 +26,7 @@ silt = do
 
 prog = evalStateT prg ([Map.empty],1)
 prg = do
-	prg <- mind "pecan.txt"
+	prg <- mind "Prelude.txt"
 	p <- funcStream prg
 	e <- comp p
 	liftIO $ run e

@@ -1,15 +1,5 @@
-Letrec foldl f v as = case (as) of
-	[] -> (v)
-	(x:xs) -> (foldl f (f v x) xs);
-rev = foldl (\xs.\x.x:xs) [];
-mod a b = let x = a/b; in a-b*x;
-Letrec gen n l = case (n) of
-	0 -> (l)
-	x -> (gen (n-1) (n:l));
-Letrec filter p xs = case (xs) of
-	[] -> ([])
-	(x:xs) -> (if (p x) then (x:(filter p xs)) else (filter p xs));
-Letrec sieve fs ps = case (fs) of
-	[] -> (ps)
-	(x:xs) -> (let filt = filter (\n.mod n x!=0) xs; in sieve (filt) (x:ps));
-m = let lst = gen 100 []; in (rev..sieve ~lst) [];
+Letrec find x xs = case (xs) of
+		   [] -> (0)
+		   ((a,b):as) -> (if (a==x) then (b) else (find x as));
+
+main = ([(1,2)]);
