@@ -4,10 +4,12 @@ import Text.ParserCombinators.Parsec
 import Interpreter.CmdAbstractSyntax
 import Parser (parseFile, alias, expression)
 
-commandParse input = parse command "" input
+parseCommand input = case (parse command "" input) of
+			Right res -> res
+
 
 -- command := !load <filename> | !quit | !let <alias_definiton> | <expression>
-command = try letcmd <|> try loadcmd <|> try quitcmd <|> expressioncmd
+command = try letcmd <|> try loadcmd <|> try quitcmd <|> try showcmd <|> expressioncmd
 
 
 loadcmd = do
@@ -30,7 +32,11 @@ expressioncmd = do
 	tempexpr <- expression
 	return $ ExpressionCmd tempexpr
 
+showcmd = do
+	string "!show"
+	return ShowCmd
+
 filename = do
 	head <- letter
-	tail <- many (alphaNum <|> char '.')
+	tail <- many (alphaNum <|> char '.' <|> char '/' <|> char '\\' <|> char ':')
 	return (head:tail)

@@ -25,43 +25,61 @@ data InterpreterState = IState [Module] Program [String]
 type Module = String
 -}
 
-{-
-intializeInterpreter = do
-			mods <- load "Prelude.txt"
+initializeInterpreter = do
+			mods <- load "pcons/prelude.pcons"
 			runInterpreter mods
--}
 
-runInterpreter = do
+runInterpreter mods = do
 		inp <- readline "> "
-		case (inp) of
+		case inp of
 			Nothing -> return ()
 			Just cmd -> do
-					-- mods <- getModules
-					mods <- load "pcons/prelude.pcons"
-					-- place expr in history
-					-- lookup names and substitute
-					processAndRun cmd mods
-					runInterpreter
+				let command = parseCommand cmd
+				case command of
+					QuitCmd -> return ()
+					LoadCmd filename -> do 
+							ld <- load filename
+							runInterpreter $ mods ++ ld
+					LetCmd alias -> do
+							runInterpreter $ mods ++ [alias]
+					ShowCmd -> do
+							putStr $ (showSymbols mods) ++ "\n"
+							runInterpreter mods
+					ExpressionCmd expr -> do
+							processAndRun expr mods
+							runInterpreter mods
+					_ -> runInterpreter mods
+
+{- SHOW SYMBOLS -}
+
+-- shows all available symbols loaded into the environment
+
+showSymbols mods = case mods of
+			[mod] -> extractName mod
+			(m:ms) -> (extractName m) ++ ", " ++ showSymbols ms 
+	where 
+		extractName alias = case alias of
+			NoRec name prms expr -> name 
+			Recr name prms expr -> name 
+			TRec name prms expr -> name
 
 
-parsepecans input = case (parse expression "" input) of
-		Right res -> putStr $ (++) (show res) "\n"
+{- PROCESS AND RUN -}
 
---hacky solution: always prepend the prelude to process and run
---when loading scripts, prepend those also this
-
--- processAndRun should be passed a lookup table
+-- runs a parsed expression in the interpreter
 
 processAndRun input mods = evalStateT (processAndRun' input mods) ([Map.empty], 1)
 
 
 processAndRun' input mods = do
-		let pres = case (parse expression "" input) of
-				Right res -> res
-		state <- funcStream $ desugar $ mods ++ [(NoRec "tmp" [] pres)]
+		state <- funcStream $ desugar $ mods ++ [(NoRec "tmp" [] input)]
 		e <- comp state
 		liftIO $ run e
 		return ()
+
+{- LOAD -}
+
+-- loads a module into the interactive environment
 
 load filename = do
 		contents <- parseFile filename
