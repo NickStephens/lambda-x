@@ -25,9 +25,21 @@ data InterpreterState = IState [Module] Program [String]
 type Module = String
 -}
 
+main = initializeInterpreter
+
+{- INITIALIZE INTERPRETER -}
+
+-- loads the prelude into the interpreter and starts it
+
 initializeInterpreter = do
-			mods <- load "pcons/prelude.pcons"
+			let prelude = "./pcons/prelude.pcons"
+			putStr $ "loading prelude from ... " ++ prelude ++ "\n"
+			mods <- load prelude
 			runInterpreter mods
+
+{- RUN INTERPRETER -}
+
+-- the heart of the interpreter
 
 runInterpreter mods = do
 		inp <- readline "> "
