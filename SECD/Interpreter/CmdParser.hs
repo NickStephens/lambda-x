@@ -2,11 +2,10 @@ module Interpreter.CmdParser where
 
 import Text.ParserCombinators.Parsec
 import Interpreter.CmdAbstractSyntax
+import Control.Monad.Error
 import Parser (parseFile, alias, expression)
 
-parseCommand input = case (parse command "" input) of
-			Right res -> res
-
+parseCommand input = (parse command "" input)
 
 -- command := !load <filename> | !quit | !let <alias_definiton> | <expression>
 command = try letcmd <|> try loadcmd <|> try quitcmd <|> try showcmd <|> expressioncmd

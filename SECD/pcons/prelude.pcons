@@ -69,6 +69,3 @@ Letrec sieve fs ps = case (fs) of
 	[] -> (ps)
 	(x:xs) -> (let filt = filter (\n.mod n x!=0) xs; in sieve (filt) (x:ps));
 m = let lst = gen 100 []; in (rev..sieve (~lst)) [];
-
-head (x:xs) = x;
-tail (x:xs) = xs;

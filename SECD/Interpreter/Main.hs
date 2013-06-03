@@ -1,6 +1,7 @@
 module Interpreter.Main where
 
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Error
 import Parser
 import AbstractSyntax
 import Interpreter.CmdParser
@@ -33,11 +34,20 @@ main = initializeInterpreter
 
 initializeInterpreter = do
 			prettyHeaderPrinter
+			putStrLn ""
 			putStrLn "coauthored by Owen Meyer and Nick Stephens (2013)"
 			let prelude = "./pcons/prelude.pcons"
-			putStrLn "loading opii (Olympia PCONS Interpreter interactive) ..."
-			putStrLn $ "loading prelude from ... " ++ prelude
+			putStr $ "loading prelude from " ++ prelude ++ " ... "
 			mods <- load prelude
+			putStrLn "loaded" -- catchError load Left
+			{- case mods of 
+				Left error -> do 
+					putStrLn "failed"	
+					runInterpreter []	
+				Right pred -> do
+					putStrLn "loaded"
+					runInterpreter pred
+			-}
 			runInterpreter mods
 
 {- RUN INTERPRETER -}
@@ -51,18 +61,35 @@ runInterpreter mods = do
 			Just cmd -> do
 				let command = parseCommand cmd
 				case command of
-					QuitCmd -> return ()
-					LoadCmd filename -> do 
-							ld <- load filename
-							runInterpreter $ mods ++ ld
-					LetCmd alias -> do
-							runInterpreter $ mods ++ [alias]
-					ShowCmd -> do
-							putStrLn (showSymbols mods)
-							runInterpreter mods
-					ExpressionCmd expr -> do
-							processAndRun expr mods
-							runInterpreter mods
+					Right cmd -> case cmd of 
+						QuitCmd -> return ()
+						LoadCmd filename -> do 
+								ld <- load filename
+								runInterpreter $ mods ++ ld
+						LetCmd alias -> do
+								runInterpreter $ mods ++ [alias]
+						ShowCmd -> do
+								putStrLn (showSymbols mods)
+								runInterpreter mods
+						ExpressionCmd expr -> do
+								processAndRun expr mods
+								runInterpreter mods
+					Left err -> do 
+						disectError err
+						runInterpreter mods
+							
+
+{- DISPLAY MESSAGES -}
+
+disectError err = do
+		let col = sourceColumn $ errorPos err
+		putStr $ "parse error at column " ++ (show col)
+		putStrLn $ " " ++ (findUnexpected $ errorMessages err)
+		where findUnexpected [] = ""
+		      findUnexpected (e:es) = case e of
+					SysUnExpect msg -> "(" ++ msg ++ ")"
+					UnExpect msg -> "Unexpect " ++ msg
+					_ -> findUnexpected es
 
 {- SHOW SYMBOLS -}
 
@@ -89,6 +116,7 @@ prettyHeaderPrinter = do
 			putStrLn "       /       /    /             /      /"
 			putStrLn "      /_______/    /           __/__    /"
 			putStrLn "    -----------------------------------------"
+			putStrLn "      Olympia PCONS Interpreter interactive"
 
 
 {- PROCESS AND RUN -}
@@ -112,3 +140,4 @@ load filename = do
 		contents <- parseFile filename
 		case contents of
 			Right res -> return res
+			--Left err -> disectError err --throw error
