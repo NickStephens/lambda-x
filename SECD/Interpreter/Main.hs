@@ -32,8 +32,11 @@ main = initializeInterpreter
 -- loads the prelude into the interpreter and starts it
 
 initializeInterpreter = do
+			prettyHeaderPrinter
+			putStrLn "coauthored by Owen Meyer and Nick Stephens (2013)"
 			let prelude = "./pcons/prelude.pcons"
-			putStr $ "loading prelude from ... " ++ prelude ++ "\n"
+			putStrLn "loading opii (Olympia PCONS Interpreter interactive) ..."
+			putStrLn $ "loading prelude from ... " ++ prelude
 			mods <- load prelude
 			runInterpreter mods
 
@@ -42,7 +45,7 @@ initializeInterpreter = do
 -- the heart of the interpreter
 
 runInterpreter mods = do
-		inp <- readline "> "
+		inp <- readline "opii (!) > "
 		case inp of
 			Nothing -> return ()
 			Just cmd -> do
@@ -55,12 +58,11 @@ runInterpreter mods = do
 					LetCmd alias -> do
 							runInterpreter $ mods ++ [alias]
 					ShowCmd -> do
-							putStr $ (showSymbols mods) ++ "\n"
+							putStrLn (showSymbols mods)
 							runInterpreter mods
 					ExpressionCmd expr -> do
 							processAndRun expr mods
 							runInterpreter mods
-					_ -> runInterpreter mods
 
 {- SHOW SYMBOLS -}
 
@@ -74,6 +76,19 @@ showSymbols mods = case mods of
 			NoRec name prms expr -> name 
 			Recr name prms expr -> name 
 			TRec name prms expr -> name
+
+{- PRETTY HEADER PRINTER -}
+
+-- prints the OPIi header in all of its glory
+
+prettyHeaderPrinter = do
+			putStrLn "           ________     _________   ____"
+			putStrLn "          /       /    /        /    /      *"
+			putStrLn "         /       /    /        /    /"
+			putStrLn "        /       /    /--------     /      /"
+			putStrLn "       /       /    /             /      /"
+			putStrLn "      /_______/    /           __/__    /"
+			putStrLn "    -----------------------------------------"
 
 
 {- PROCESS AND RUN -}

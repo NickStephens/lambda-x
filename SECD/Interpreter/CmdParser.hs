@@ -39,4 +39,5 @@ showcmd = do
 filename = do
 	head <- letter
 	tail <- many (alphaNum <|> char '.' <|> char '/' <|> char '\\' <|> char ':')
+    --tail <- many1 (noneOf " ") 
 	return (head:tail)
