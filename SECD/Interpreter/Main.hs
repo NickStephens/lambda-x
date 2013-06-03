@@ -1,5 +1,6 @@
 module Interpreter.Main where
 
+import Control.Exception
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Error
 import Parser
@@ -39,16 +40,16 @@ initializeInterpreter = do
 			let prelude = "./pcons/prelude.pcons"
 			putStr $ "loading prelude from " ++ prelude ++ " ... "
 			mods <- load prelude
-			putStrLn "loaded" -- catchError load Left
-			{- case mods of 
+			case mods of 
 				Left error -> do 
 					putStrLn "failed"	
+					disectError error
+					putStrLn "WARNING: no base environment loaded (!)"
+					putStrLn "Unless you're a lambda cowboy, prepare for a wild ride ..."
 					runInterpreter []	
 				Right pred -> do
 					putStrLn "loaded"
 					runInterpreter pred
-			-}
-			runInterpreter mods
 
 {- RUN INTERPRETER -}
 
@@ -58,14 +59,20 @@ runInterpreter mods = do
 		inp <- readline "opii (!) > "
 		case inp of
 			Nothing -> return ()
+			Just "" -> runInterpreter mods  -- special empty input case
 			Just cmd -> do
 				let command = parseCommand cmd
 				case command of
 					Right cmd -> case cmd of 
 						QuitCmd -> return ()
 						LoadCmd filename -> do 
-								ld <- load filename
-								runInterpreter $ mods ++ ld
+								res <- load filename
+								case res of
+									Left error -> do
+										putStrLn $ "failed to load " ++ filename
+										runInterpreter mods
+									Right ld -> do 
+										runInterpreter $ mods ++ ld
 						LetCmd alias -> do
 								runInterpreter $ mods ++ [alias]
 						ShowCmd -> do
@@ -82,8 +89,10 @@ runInterpreter mods = do
 {- DISPLAY MESSAGES -}
 
 disectError err = do
-		let col = sourceColumn $ errorPos err
-		putStr $ "parse error at column " ++ (show col)
+		let pos = errorPos err
+		let col = sourceColumn pos
+		let row = sourceLine pos
+		putStr $ "parse error at " ++ (show row) ++ ":" ++ (show col)
 		putStrLn $ " " ++ (findUnexpected $ errorMessages err)
 		where findUnexpected [] = ""
 		      findUnexpected (e:es) = case e of
@@ -96,6 +105,7 @@ disectError err = do
 -- shows all available symbols loaded into the environment
 
 showSymbols mods = case mods of
+			[] -> ""
 			[mod] -> extractName mod
 			(m:ms) -> (extractName m) ++ ", " ++ showSymbols ms 
 	where 
@@ -136,8 +146,9 @@ processAndRun' input mods = do
 
 -- loads a module into the interactive environment
 
-load filename = do
-		contents <- parseFile filename
-		case contents of
-			Right res -> return res
-			--Left err -> disectError err --throw error
+load filename = (parseFile filename) --`catch` loadHandler
+
+loadHandler :: Exception e => e -> IO (Either ParseError Program)
+loadHandler _ = do
+		putStrLn "failed to load"
+		return $ Right []

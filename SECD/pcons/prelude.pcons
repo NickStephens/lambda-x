@@ -10,6 +10,11 @@ Letrec foldl f v as = case (as) of
 Letrec foldr f b as = case (as) of
 	[] -> (b)
 	(x:xs) -> (f x (foldr f b xs));
+
+Letrec foldr1 f (x:xs) = case (xs) of
+			[] -> (x) 
+			ys -> (f x (foldr1 f xs));
+
 rev = foldl (\xs.\x.x:xs) [];
 Letrec length xs = case (xs) of
 	[] -> (0)
@@ -69,3 +74,4 @@ Letrec sieve fs ps = case (fs) of
 	[] -> (ps)
 	(x:xs) -> (let filt = filter (\n.mod n x!=0) xs; in sieve (filt) (x:ps));
 m = let lst = gen 100 []; in (rev..sieve (~lst)) [];
+
