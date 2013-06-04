@@ -24,13 +24,11 @@ recode expr = fst$runState (rc expr) (Map.empty, zero)
 
 rc :: Exp -> RC Exp
 rc expr = do
-	expr' <- enc expr
-	x <- enc expr'
+	x <- enc expr
 	let xx = cbv (App cbV x)
 	(env, _) <- get
 	dex <- deco xx
-	dex' <- deco dex 
-	return dex'
+	return dex
 
 
 encode expr = fst $ runState (enc expr) (Map.empty, zero)
