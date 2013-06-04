@@ -52,13 +52,6 @@ Letrec append xs ys = case (xs) of
 	[] -> (ys)
 	(x:xs) -> (x:append xs ys);
 Letrec delete n (x:xs) = if (n==x) then (xs) else (x:delete n xs);
-del s d = (head..delete s..delete d) [1,2,3];
-Letrec mvs n (s,d) = case (n) of
-	0 -> ([])
-	x -> (append (mvs (n-1) (s<>del s d)) (append ((s<>d):[]) (mvs (n-1) (del s d<>d))));
-twr n = mvs n (1,3);
-m = twr 3;
-
 
 
 
@@ -75,3 +68,6 @@ Letrec sieve fs ps = case (fs) of
 	(x:xs) -> (let filt = filter (\n.mod n x!=0) xs; in sieve (filt) (x:ps));
 m = let lst = gen 100 []; in (rev..sieve (~lst)) [];
 
+Letrec exp x y = case (y) of
+		1 -> (x)
+		z -> (x*(exp x (y-1)));
