@@ -54,9 +54,9 @@ head (x:xs) = x;
 
 tail (x:xs) = xs;
 
-Letrec last (x:xs) = case (xs) of
-	[] -> (x)
-	zs -> (last xs);
+Letrec init (x:xs) = case (xs) of
+	[] -> ([])
+	zs -> (x:(init xs));
 
 Letrec last (x:xs) = case (xs) of
 	[] -> (x)
