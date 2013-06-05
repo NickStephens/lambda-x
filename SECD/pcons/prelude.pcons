@@ -2,7 +2,7 @@ id x = x;
 
 add x y = x+y;
 
-sub x y = x+y;
+sub x y = x-y;
 
 mul x y = x*y;
 
@@ -10,7 +10,7 @@ div x y = x/y;
 
 uncurry f (x,y) = f x y;
 
-curry f x y = f (x,y);
+curry f x y = f (x<>y);
 
 fst (x,y) = x;
 
@@ -90,9 +90,9 @@ Letrec dropWhile p xs = case (xs) of
 	[] -> ([])
 	(y:ys) -> (if (p y) then (dropWhile p ys) else (xs));
 
-splitAt n xs = ((take n xs), (drop n xs));
+splitAt n xs = (take n xs)<>(drop n xs);
 
-span p xs = ((takeWhile p xs), (dropWhile p xs));
+span p xs = (takeWhile p xs)<>(dropWhile p xs);
 
 reverse = foldl (\xs.\x.x:xs) [];
 
