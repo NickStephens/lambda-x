@@ -1,73 +1,109 @@
+uncurry f (x,y) = f x y;
+
+curry f x y = f (x,y);
+
+fst (x,y) = x;
+
+snd (x,y) = x;
+
+min x y = if (x<y) then (x) else (y);
+
+max x y = if (x>y) then (x) else (y);
+
 Letrec map f as = case (as) of
 	[] -> ([])
 	(x:xs) -> ((f x:(map f xs)));
+
 Letrec filter p xs = case (xs) of
 	[] -> ([])
 	(x:xs) -> (if (p x) then (x:(filter p xs)) else (filter p xs));
+
 Letrec foldl f v as = case (as) of
 	[] -> (v)
 	(x:xs) -> (foldl f (f v x) xs);
+
 Letrec foldr f b as = case (as) of
 	[] -> (b)
 	(x:xs) -> (f x (foldr f b xs));
 
 Letrec foldr1 f (x:xs) = case (xs) of
-			[] -> (x) 
-			ys -> (f x (foldr1 f xs));
+	[] -> (x) 
+	ys -> (f x (foldr1 f xs));
 
-rev = foldl (\xs.\x.x:xs) [];
-Letrec length xs = case (xs) of
-	[] -> (0)
-	(x:xs) -> (1+(length xs));
+and xs = foldr1 (\x.\y. x&&y) xs;
+
+or xs = foldr1 (\x.\y. x||y) xs;
+
+all f = (and..map f);
+
+any f = (or..map f); 
+
+elem x = any (\a.a==x);
+
+head (x:xs) = x;
+
+tail (x:xs) = xs;
+
+Letrec last (x:xs) = case (xs) of
+	[] -> (x)
+	zs -> (last xs);
+
+Letrec last (x:xs) = case (xs) of
+	[] -> (x)
+	y -> (last xs);
+
+Letrec bang n (x:xs) = case (n) of
+	0 -> (x)
+	y -> (bang (n-1) xs);
+
+Letrec null xs = case (xs) of
+	[] -> (true)
+	ys -> (false);
+
+Letrec take n xs = case (n) of
+	0 -> ([])
+	z -> (case (xs) of
+		[] -> ([])
+		(y:ys) -> (y:(take (n-1) ys)));
+
+Letrec takeWhile p xs = case (xs) of
+	[] -> ([])
+	(y:ys) -> (if (p y) then (y:(takeWhile p ys)) else ([]));
+
+Letrec drop n xs = case (n) of
+	0 -> (xs)
+	z -> (case (xs) of
+		[] -> ([])
+		(y:ys) -> (drop (n-1) ys));
+
+Letrec dropWhile p xs = case (xs) of
+	[] -> ([])
+	(y:ys) -> (if (p y) then (dropWhile p ys) else (ys));
+
+splitAt n xs = ((take n xs), (drop n xs));
+
+span p xs = ((takeWhile p xs), (dropWhile p xs));
+
+reverse = foldl (\xs.\x.x:xs) [];
+
 Letrec zip xss yss = case (xss) of
 	[] -> ([])
 	(x:xs) -> (case (yss) of
 		[] -> ([])
 		(y:ys) -> ((x<>y):(zip xs ys)));
+
 Letrec append xs ys = case (xs) of
 	[] -> (ys)
 	(x:xs) -> (x:append xs ys);
+
 concat = foldr append [];
-snd (a,b) = b;
-fst (a,b) = a;
-m = (\pr.fst pr+snd pr) (2,3);
 
+minimum = foldr1 min;
 
+maximum = foldr1 max;
 
+sum = foldr1 (\x.\y.x+y);
 
+product = foldr1 (\x.\y.x*y);
 
-Letrec fib n = case (n) of
-	0 -> (1)
-	1 -> (1)
-	x -> (fib (n-1)+fib (n-2));
-Letrec fbs n = case (n) of
-	0 -> ([1])
-	x -> ((\fb.fb x:(fbs (x-1))) fib);
-m = fbs 8;
-
-
-
-head (x:xs) = x;
-Letrec append xs ys = case (xs) of
-	[] -> (ys)
-	(x:xs) -> (x:append xs ys);
-Letrec delete n (x:xs) = if (n==x) then (xs) else (x:delete n xs);
-
-
-
-rev = foldl (\xs.\x.x:xs) [];
-mod a b = let x = a/b; in a-b*x;
-Letrec gen n l = case (n) of
-	0 -> (l)
-	x -> (gen (n-1) (n:l));
-Letrec filter p xs = case (xs) of
-	[] -> ([])
-	(x:xs) -> (if (p x) then (x:(filter p xs)) else (filter p xs));
-Letrec sieve fs ps = case (fs) of
-	[] -> (ps)
-	(x:xs) -> (let filt = filter (\n.mod n x!=0) xs; in sieve (filt) (x:ps));
-m = let lst = gen 100 []; in (rev..sieve (~lst)) [];
-
-Letrec exp x y = case (y) of
-		1 -> (x)
-		z -> (x*(exp x (y-1)));
+length = foldr (\x.\y.y+1) 0;
