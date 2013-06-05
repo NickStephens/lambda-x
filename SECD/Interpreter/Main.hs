@@ -69,6 +69,7 @@ runInterpreter mods = do
 								res <- load filename
 								case res of
 									Left error -> do
+										disectError error
 										putStrLn $ "failed to load " ++ filename
 										runInterpreter mods
 									Right ld -> do 
