@@ -223,7 +223,7 @@ run' = do
 	secd' <- get
 	case secd' of
 		(v, e, []) -> do
-			liftIO $ putStrLn ("result: "  ++ (show  v))
+			liftIO $ putStrLn ((show  (head v)))
 		secd''         -> run'
 
 displayEnv :: Env -> Secd ()
