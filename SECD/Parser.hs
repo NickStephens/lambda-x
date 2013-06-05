@@ -249,7 +249,7 @@ pair = do
 	many space
 	e2 <- expression
 	char ')'
-	return $ (App (App (Op PAIRIT) e1) e2)	
+	return $ Pr (e1,e2) --(App (App (Op PAIRIT) e1) e2)	
 
 list = do
 	char '['
