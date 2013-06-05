@@ -88,7 +88,7 @@ Letrec drop n xs = case (n) of
 
 Letrec dropWhile p xs = case (xs) of
 	[] -> ([])
-	(y:ys) -> (if (p y) then (dropWhile p ys) else (ys));
+	(y:ys) -> (if (p y) then (dropWhile p ys) else (xs));
 
 splitAt n xs = ((take n xs), (drop n xs));
 
