@@ -1,0 +1,5 @@
+Letrec gnrtr n acc = case (n) of
+			0 -> (0:(acc))
+			m -> (gnrtr (m-1) (n:acc));
+
+generator n = gnrtr n [];

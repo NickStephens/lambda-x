@@ -37,7 +37,7 @@ initializeInterpreter = do
 			prettyHeaderPrinter
 			putStrLn ""
 			putStrLn "coauthored by Owen Meyer and Nick Stephens (2013)"
-			let prelude = "./pcons/prelude.pcons"
+			let prelude = "./hasl/prelude.hasl"
 			putStr $ "loading prelude from " ++ prelude ++ " ... "
 			mods <- load prelude
 			case mods of 
@@ -120,14 +120,14 @@ showSymbols mods = case mods of
 -- prints the OPIi header in all of its glory
 
 prettyHeaderPrinter = do
-			putStrLn "           ________     _________   ____"
+			putStrLn "           ________                 ____"
 			putStrLn "          /       /    /        /    /      *"
 			putStrLn "         /       /    /        /    /"
-			putStrLn "        /       /    /--------     /      /"
-			putStrLn "       /       /    /             /      /"
-			putStrLn "      /_______/    /           __/__    /"
+			putStrLn "        /       /    /--------/    /      /"
+			putStrLn "       /       /    /        /    /      /"
+			putStrLn "      /_______/    /        /  __/__    /"
 			putStrLn "    -----------------------------------------"
-			putStrLn "      Olympia PCONS Interpreter interactive"
+			putStrLn "      Olympia Hassle Interpreter interactive"
 
 
 {- PROCESS AND RUN -}

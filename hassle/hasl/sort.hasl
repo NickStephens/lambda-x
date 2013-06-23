@@ -1,0 +1,3 @@
+Letrec qsort xs = case (xs) of
+			[] -> ([])
+			(y:ys) -> (let z = head ys; in if (y<z) then (y:(qsort (ys))) else (z:(qsort (y:(tail ys)))));

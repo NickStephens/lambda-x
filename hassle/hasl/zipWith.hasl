@@ -1,0 +1,5 @@
+Letrec zipWith f xs ys = case (xs) of
+	[] -> ([])
+	(a:as) -> (case (ys) of
+		[] -> ([])
+		(b:bs) -> ((f a b):(zipWith f as bs)));
