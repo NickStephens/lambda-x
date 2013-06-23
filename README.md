@@ -110,5 +110,10 @@ b) list)))) (\p -> (p \a -> \b -> a) (\p -> (p \a -> \b -> b) (\p -> (p \a -> \b
 ### SEC Architecture &larr; Written in Haskell
 A virtual machine based off the symbolic architecture of the SEC.
 
-### PCONS &larr; Written in Haskell
+### Hassle &larr; Written in Haskell
 A minimalistic, untyped, functional language which compiles to the SEC virtual machine.
+
+#### Features
+* Pattern Matching
+* Currying
+* Point-free function compostion
