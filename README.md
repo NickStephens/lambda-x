@@ -107,8 +107,6 @@ b) list)))) (\p -> (p \a -> \b -> a) (\p -> (p \a -> \b -> b) (\p -> (p \a -> \b
 -> \y -> \p -> ((p x) y) (f (\app -> (\p -> (p \a -> \b -> a) (\p -> (p \a -> \b -> b) app)) term))) (f (\app -> (\p -> (p \a -> \b -> b) (\p -> (p \a
 -> \b -> b) app)) term)))))) f) term))) \x -> \a -> \b -> a)))))
 
-### SEC Architecture &larr; Written in Haskell
-A virtual machine based off the symbolic architecture of the SEC.
 
 ### Hassle &larr; Written in Haskell
 A minimalistic, untyped, functional language which compiles to the SEC virtual machine.
@@ -117,3 +115,8 @@ A minimalistic, untyped, functional language which compiles to the SEC virtual m
 * Pattern Matching
 * Currying
 * Point-free function compostion
+* Interpreted on a virtualized symbolic architecture (SEC)
+* OHIi, an interactive Hassle interpreter
+
+### SEC Architecture &larr; Written in Haskell
+A virtual machine based off the symbolic architecture of the SEC.
