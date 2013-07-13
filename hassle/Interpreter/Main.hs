@@ -56,7 +56,7 @@ initializeInterpreter = do
 -- the heart of the interpreter
 
 runInterpreter mods = do
-		inp <- readline "opii (!) > "
+		inp <- readline "ohii (!) > "
 		case inp of
 			Nothing -> return ()
 			Just "" -> runInterpreter mods  -- special empty input case
@@ -120,15 +120,11 @@ showSymbols mods = case mods of
 -- prints the OPIi header in all of its glory
 
 prettyHeaderPrinter = do
-			putStrLn "           ________                 ____"
-			putStrLn "          /       /    /        /    /      *"
-			putStrLn "         /       /    /        /    /"
-			putStrLn "        /       /    /--------/    /      /"
-			putStrLn "       /       /    /        /    /      /"
-			putStrLn "      /_______/    /        /  __/__    /"
-			putStrLn "    -----------------------------------------"
-			putStrLn "      Olympia Hassle Interpreter interactive"
-
+		putStrLn "     ____    __    __  ______  __"
+		putStrLn "  __    __  __    __    __"
+		putStrLn " __    __  ________    __    __"
+		putStrLn "__    __  __    __    __    __"
+		putStrLn " ____    __    __  ______  __"
 
 {- PROCESS AND RUN -}
 
